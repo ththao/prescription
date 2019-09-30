@@ -1,0 +1,5 @@
+/webcache
+/.idea
+/www/application/sqlite/prescription.db
+/www/.settings
+/www/.buildpath
