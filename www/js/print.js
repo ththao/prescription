@@ -1,6 +1,6 @@
-	function Popup(data)
+function Popup(data)
 {
-    var mywindow = window.open('', 'Hóa đơn', 'height=210mm,width=148.5mm');
+    var mywindow = window.open('', 'Hóa đơn', 'height=148.5mm,width=210mm');
     mywindow.document.write('<html><head><title>Hóa đơn</title>');
     mywindow.document.write('</head><body');
     mywindow.document.write(data);

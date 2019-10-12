@@ -6,3 +6,12 @@
 .btn-print-bill-view {
     margin-left: 10px;
 }
+@page {
+    size: A5 landscape;
+}
+@media print {
+  body {
+    width: 210mm,
+    height: 148.5mm
+  }
+}

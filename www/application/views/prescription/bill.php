@@ -1,7 +1,7 @@
 <!-- Main component for a primary marketing message or call to action -->
 <button type="submit" class="btn btn-warning pull-right btn-print"><span class="glyphicon glyphicon-print" style="margin-right: 10px"></span>IN</button>
 
-<div class="bill">
+<div class="bill" style="position: relative; height:148.5mm; width:210mm;">
     <h2 style="text-align: center">HÓA ĐƠN</h2>
 
     <?php $this->load->view('patient/info'); ?>
