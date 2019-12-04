@@ -1,7 +1,7 @@
 <!-- Main component for a primary marketing message or call to action -->
 <button type="submit" class="btn btn-warning pull-right btn-print"><span class="glyphicon glyphicon-print" style="margin-right: 10px"></span>IN</button>
 
-<div class="prescription" style="position: relative; height:148.5mm; width:210mm;">
+<div class="prescription" style="size: A5 landscape; position: relative; height:148.5mm; width:210mm;">
     <div style="font-size: 13px;">Phòng khám <?php echo PK; ?></div>
     <div style="font-size: 13px;">BS <?php echo DOCTOR_NAME; ?> - <?php echo DOCTOR_MOBILE; ?></div>
     <div style="font-size: 13px;">ĐC <?php echo DOCTOR_ADDR; ?></div>

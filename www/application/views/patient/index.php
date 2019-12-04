@@ -23,7 +23,7 @@
 
             <tr>
                 <td><input type="text" class="form-control" placeholder="Tìm theo ngày khám" name="date" id="date" value="<?php echo isset($param[1]) ? $param[1] : '' ?>"></td>
-                <td><input onblur="search()" type="text" class="form-control" placeholder="Tìm theo tên" value="<?php echo isset($param[0]) ? $param[0] : '' ?>" name="patient-search"></td>
+                <td><input onblur="search()" type="text" class="form-control" placeholder="Tìm theo tên" id="patient-search" value="<?php echo isset($param[0]) ? $param[0] : '' ?>" name="patient-search"></td>
                 <td></td><td></td><td></td><td></td>
             </tr>
 
@@ -61,6 +61,12 @@
             }
         });
 
+        $('#date, #patient-search').keypress(function (e) {
+			if (e.which == 13) {
+				search();
+			}
+		});
+
         $('.glyphicon-remove').click(function () {
             if (confirm("Bạn có muốn xóa bệnh nhân này?")){
                 return true;
@@ -70,17 +76,7 @@
         });
     });
 
-    function search(date) {
-        /*var name = $('input[name=patient-search]').val();
-        var date = $.datepicker.formatDate('ddmmyy', $('#date').datepicker('getDate'));
-        if (date) {
-            var param = name + '_' + date;
-        } else {
-            param = name;
-        }
-		
-        window.location.href = "<?php //echo site_url('patient/search/'); ?>" + '/' + encodeURI(param);*/
-
+    function search() {
         $('#patient-form').submit();
     }
 
