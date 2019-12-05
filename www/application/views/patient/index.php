@@ -4,12 +4,6 @@
         <!-- Default panel contents -->
         <div class="panel-heading">Danh sách bệnh nhân</div>
 
-        <div class="navbar-form" role="search" style="margin-right: 0px" >
-            <nav class="pull-left">
-                <?php echo $models['pagination']; ?>
-            </nav>
-        </div>
-
         <!-- Table -->
         <table class="table table-striped table-bordered" style="margin-bottom: 0px;">
             <tr>
@@ -49,6 +43,12 @@
             <?php } ?>
 
         </table>
+
+        <div class="navbar-form" role="search" style="margin-right: 0px" >
+            <nav class="pull-left">
+                <?php echo $models['pagination']; ?>
+            </nav>
+        </div>
     </div>
 </form>
 
