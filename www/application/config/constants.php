@@ -84,7 +84,7 @@ defined('EXIT_DATABASE')       OR define('EXIT_DATABASE', 8); // database error
 defined('EXIT__AUTO_MIN')      OR define('EXIT__AUTO_MIN', 9); // lowest automatically-assigned error code
 defined('EXIT__AUTO_MAX')      OR define('EXIT__AUTO_MAX', 125); // highest automatically-assigned error code
 
-defined('PK')                  OR define('PK', 'TAI MŨI HỌNG');
-defined('DOCTOR_NAME')         OR define('DOCTOR_NAME', 'Nguyễn Thị Chi Mai');
-defined('DOCTOR_MOBILE')       OR define('DOCTOR_MOBILE', '090 8205571');
-defined('DOCTOR_ADDR')         OR define('DOCTOR_ADDR', '1156A Kha Van Cân, Linh Chiểu, Q. Thủ Đức');
+defined('PK')                  OR define('PK', 'Sản Nhi BS Phương');
+defined('DOCTOR_NAME')         OR define('DOCTOR_NAME', 'Phương');
+defined('DOCTOR_MOBILE')       OR define('DOCTOR_MOBILE', '0908210250');
+defined('DOCTOR_ADDR')         OR define('DOCTOR_ADDR', '51 quốc lộ 1K, Linh Xuân, Tp Thủ Đức');

@@ -12,7 +12,7 @@ class Patient_model extends MY_Model {
 
     public function search($search_param, $limit, $start)
     {
-        $this->db->select('*, diagnostic.diagnostic');
+        $this->db->select('*, diagnostic.diagnostic, diagnostic.id AS diagnostic_id');
         $this->db->from('patient');
         $this->db->join('diagnostic', 'diagnostic.patient_id = patient.id', 'INNER');
         if (isset($search_param[0]) && $search_param[0]) {

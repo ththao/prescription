@@ -1,5 +1,5 @@
 <!-- Main component for a primary marketing message or call to action -->
-<form method="get" id="patient-form" action="<?php echo site_url('patient/search'); ?>">
+<form method="get" id="patient-form" action="<?php echo site_url('patient/index'); ?>">
     <div class="panel panel-default">
         <!-- Default panel contents -->
         <div class="panel-heading">Danh sách bệnh nhân</div>
@@ -29,14 +29,14 @@
                     <td><label class="display"><?php echo $item->gender ?></label></td>
                     <td><label class="display"><?php echo $item->diagnostic ?></label></td>
                     <td style="text-align: center; width: 100px">
-                        <a href="/patient/view/<?php echo $item->id ?>" title="Xem chi tiết bệnh nhân">
-                            <span title="Xem chi tiết bệnh nhân" class="glyphicon glyphicon-search" style="color: green; margin-right: 5px;"></span>
+                        <a href="/patient/view/<?php echo $item->diagnostic_id; ?>" title="Xem chi tiết">
+                            <span title="Xem chi tiết" class="glyphicon glyphicon-search" style="color: green; margin-right: 5px;"></span>
                         </a>
-                        <a href="/prescription/index?patient_id=<?php echo $item->id ?>" title="Chỉnh sửa">
-                            <span title="Tạo đơn thuốc mới từ đơn thuốc hiện tại" class="glyphicon glyphicon-edit" style="color: blue; margin-right: 5px;"></span>
+                        <a href="/prescription/index?diagnostic_id=<?php echo $item->diagnostic_id; ?>" title="Chỉnh sửa">
+                            <span title="Chỉnh sửa" class="glyphicon glyphicon-edit" style="color: blue; margin-right: 5px;"></span>
                         </a>
-                        <a href="/patient/delete/<?php echo $item->id ?>" title="Xóa bệnh nhân">
-                            <span title="Xóa bệnh nhân" class="glyphicon glyphicon glyphicon-remove" style="color: red"></span>
+                        <a href="/patient/delete/<?php echo $item->diagnostic_id; ?>" title="Xóa">
+                            <span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red"></span>
                         </a>
                     </td>
                 </tr>

@@ -12,6 +12,9 @@
     <tr>
         <td colspan="3">Chẩn đoán: <?php echo isset($diagnostic->diagnostic) ? $diagnostic->diagnostic : ''; ?></td>
     </tr>
+    <tr>
+        <td colspan="3">Ghi chú: <?php echo isset($diagnostic->note) ? $diagnostic->note : ''; ?></td>
+    </tr>
     <tr style="height: 30px">
         <td colspan="3"></td>
     </tr>
