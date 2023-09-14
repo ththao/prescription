@@ -15,10 +15,13 @@ class Patient extends My_Controller {
 	{
 	    $param = array();
 	    if (isset($_GET['patient-search'])) {
-	        $param[] = $_GET['patient-search'];
+	        $param['name'] = $_GET['patient-search'];
 	    }
 	    if (isset($_GET['date']) && $_GET['date']) {
-	        $param[] = date('d-m-Y', strtotime($_GET['date']));
+	        $param['date'] = date('d-m-Y', strtotime($_GET['date']));
+	    }
+	    if (isset($_GET['patient_id']) && $_GET['patient_id']) {
+	        $param['patient_id'] = $_GET['patient_id'];
 	    }
 	    $count = $this->patient_model->count($param);
         $config = $this->pagination_config($count, site_url('patient/index'));

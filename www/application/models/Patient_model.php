@@ -12,16 +12,23 @@ class Patient_model extends MY_Model {
 
     public function search($search_param, $limit, $start)
     {
-        $this->db->select('*, diagnostic.diagnostic, diagnostic.id AS diagnostic_id');
+        $this->db->select(
+            'patient.id, patient.name, patient.dob, patient.address, patient.phone, patient.gender,
+            diagnostic.date_created, diagnostic.diagnostic, diagnostic.id AS diagnostic_id'
+        );
         $this->db->from('patient');
         $this->db->join('diagnostic', 'diagnostic.patient_id = patient.id', 'INNER');
-        if (isset($search_param[0]) && $search_param[0]) {
-            $this->db->like('patient.name', $search_param[0]);
+        if (isset($search_param['patient_id']) && $search_param['patient_id']) {
+            $this->db->like('patient.id', $search_param['patient_id']);
+        } else {
+            if (isset($search_param['name']) && $search_param['name']) {
+                $this->db->like('patient.name', $search_param['name']);
+            }
         }
-        if (isset($search_param[1]) && $search_param[1]) {
-            $this->db->where('STRFTIME("%d-%m-%Y", patient.date_created) = ', $search_param[1]);
+        if (isset($search_param['date']) && $search_param['date']) {
+            $this->db->where('STRFTIME("%d-%m-%Y", patient.date_created) = ', $search_param['date']);
         }
-        $this->db->order_by('id DESC');
+        $this->db->order_by('diagnostic.date_created DESC');
         $this->db->limit($limit, $start);
         
         $query = $this->db->get();
@@ -34,8 +41,12 @@ class Patient_model extends MY_Model {
         $this->db->select('COUNT(*) AS cnt');
         $this->db->from('patient');
         $this->db->join('diagnostic', 'diagnostic.patient_id = patient.id', 'INNER');
-        if (isset($search_param[0]) && $search_param[0]) {
-            $this->db->like('patient.name', $search_param[0]);
+        if (isset($search_param['patient_id']) && $search_param['patient_id']) {
+            $this->db->like('patient.id', $search_param['patient_id']);
+        } else {
+            if (isset($search_param[0]) && $search_param[0]) {
+                $this->db->like('patient.name', $search_param[0]);
+            }
         }
         if (isset($search_param[1]) && $search_param[1]) {
             $this->db->where('STRFTIME("%d-%m-%Y", patient.date_created) = ', $search_param[1]);

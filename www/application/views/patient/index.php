@@ -16,15 +16,15 @@
             </tr>
 
             <tr>
-                <td><input type="text" class="form-control" placeholder="Tìm theo ngày khám" name="date" id="date" value="<?php echo isset($param[1]) ? $param[1] : '' ?>"></td>
-                <td><input onblur="search()" type="text" class="form-control" placeholder="Tìm theo tên" id="patient-search" value="<?php echo isset($param[0]) ? $param[0] : '' ?>" name="patient-search"></td>
+                <td><input type="text" class="form-control" placeholder="Tìm theo ngày khám" name="date" id="date" value="<?php echo isset($param['date']) ? $param['date'] : '' ?>"></td>
+                <td><input onblur="search()" type="text" class="form-control" placeholder="Tìm theo tên" id="patient-search" value="<?php echo isset($param['name']) ? $param['name'] : '' ?>" name="patient-search"></td>
                 <td></td><td></td><td></td><td></td>
             </tr>
 
             <?php foreach ($models['patients'] as $item) { ?>
                 <tr class="patient-item patient-item-display">
                     <td><?php echo date("d-m-Y", strtotime($item->date_created)); ?></td>
-                    <td><label class="display"><?php echo $item->name ?></label></td>
+                    <td><label class="display"><a href="/patient/index?patient_id=<?php echo $item->id; ?>"><?php echo $item->name ?></a></label></td>
                     <td><label class="display"><?php echo $item->dob ?></label></td>
                     <td><label class="display"><?php echo $item->gender ?></label></td>
                     <td><label class="display"><?php echo $item->diagnostic ?></label></td>
@@ -43,13 +43,17 @@
             <?php } ?>
 
         </table>
-
+		
         <div class="navbar-form" role="search" style="margin-right: 0px" >
             <nav class="pull-left">
                 <?php echo $models['pagination']; ?>
             </nav>
         </div>
     </div>
+        
+    <?php if (isset($param['patient_id']) && $param['patient_id']): ?>
+		<a href="/patient/index" class="btn btn-warning" id="back">Quay về danh sách</a>
+	<?php endif; ?>
 </form>
 
 <script>
