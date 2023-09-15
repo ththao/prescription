@@ -13,25 +13,18 @@
     
     <table width="100%" border="0" style="position: absolute; bottom: 10px;">
         <tr>
-            <td colspan="2" height="30px"></td>
-        </tr>
-        <tr>
-            <td width="60%" ></td>
+            <td style="font-size: 11px;">Đơn thuốc chỉ có giá trị cho mỗi lần khám</td>
             <td style="text-align: center; font-size: 12px;">Ngày <?php echo date('d'); ?> tháng <?php echo date('m'); ?> năm <?php echo date('Y'); ?></td>
         </tr>
         <tr>
-            <td colspan="2" height="30px"></td>
-        </tr>
-        <tr>
-            <td style="font-size: 11px;">Đơn thuốc chỉ có giá trị cho mỗi lần khám</td>
-            <td style="text-align: center;  font-size: 12px;"><b>Bác sĩ <?php echo DOCTOR_NAME; ?></b></td>
-        </tr>
-        <tr>
-            <td colspan="2" style="font-size: 11px;">Tái khám ngày:</td>
+            <td colspan="2" style="font-size: 11px;">Tái khám ngày: <?php echo date('d-m-Y', strtotime('+7 days')); ?></td>
         </tr>
         <tr>
         	<td colspan="2" style="font-size: 11px;">(Khi tái khám nhớ mang theo đơn thuốc)</td>
-            
+        </tr>
+        <tr>
+        	<td></td>
+            <td style="text-align: center;  font-size: 12px;"><b>Bác sĩ <?php echo DOCTOR_NAME; ?></b></td>
         </tr>
     </table>
 </div>
