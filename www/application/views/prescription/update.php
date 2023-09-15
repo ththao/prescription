@@ -94,7 +94,7 @@
     </table>
     <input type="text" value="<?php echo (isset($prescriptions) && $prescriptions) ? (count($prescriptions)+1) : $i; ?>" style="display: none" name="index_row">
 
-    <a href="/prescription/index?patient_id=<?php echo $patient->id; ?>" class="btn btn-success add-new-prescription <?php echo (isset($patient) && $patient && isset($diagnostic) && $diagnostic) ? '' : 'hide'; ?>">Tạo đơn thuốc mới</a>
+    <a href="/prescription/index?patient_id=<?php echo $patient->id; ?>" class="btn btn-success pull-left add-new-prescription <?php echo (isset($patient) && $patient && isset($diagnostic) && $diagnostic) ? '' : 'hide'; ?>">Tạo đơn thuốc mới</a>
     <button type="submit" class="btn btn-success save-item pull-right" style="margin-left: 10px" dianostic_id="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->id : ''; ?>">Lưu đơn thuốc</button>
 
     <button type="button" class="btn btn-primary pull-right btn-print-bill <?php echo (isset($diagnostic) && $diagnostic) ? '' : 'hide'; ?>" id="print_bill" onclick="printBill()" value="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->id : ''; ?>">In hóa đơn</button>

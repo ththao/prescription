@@ -50,12 +50,14 @@
             </nav>
         </div>
     </div>
-        
-    <?php if (isset($param['patient_id']) && $param['patient_id']): ?>
-    	<a href="/prescription/index?patient_id=<?php echo $param['patient_id']; ?>" class="btn btn-success add-new-prescription">Tạo đơn thuốc mới</a>
-		<a href="/patient/index" class="btn btn-warning" id="back">Quay về danh sách</a>
-	<?php endif; ?>
 </form>
+        
+<?php if (isset($param['patient_id']) && $param['patient_id']): ?>
+<div style="clear: both;">
+	<a href="/prescription/index?patient_id=<?php echo $param['patient_id']; ?>" class="btn btn-success add-new-prescription">Tạo đơn thuốc mới</a>
+	<a href="/patient/index" class="btn btn-warning" id="back">Quay về danh sách</a>
+</div>
+<?php endif; ?>
 
 <script>
     $(document).ready(function() {

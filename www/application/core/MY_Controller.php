@@ -3,7 +3,7 @@ if (!defined('BASEPATH')) exit('No direct script access allowed');
 
 class My_Controller extends CI_Controller
 {
-    const PER_PAGE = 20;
+    const PER_PAGE = 13;
     public $layout = 'layout/main';
 
     public function layout($layout)
