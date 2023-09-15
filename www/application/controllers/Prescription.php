@@ -21,7 +21,7 @@ class Prescription extends My_Controller {
             }
             $js_drug_names = json_encode($drug_names);
             
-            $query = $this->db->distinct()->select('id, name, address, dob, gender, phone')->from('patient')->get();
+            $query = $this->db->select('id, name, address, dob, gender, phone')->from('patient')->get();
             $patients = $query->result();
             $patient_names = array();
             if ($patients) {
@@ -63,7 +63,13 @@ class Prescription extends My_Controller {
                     'prescriptions' => $prescriptions
                 ));
             } else {
+                if (isset($_GET['patient_id']) && $_GET['patient_id']) {
+                    $patient = $this->patient_model->findOne(array('id' => $_GET['patient_id']));
+                } else {
+                    $patient = null;
+                }
                 $this->render('prescription/update', array(
+                    'patient' => $patient,
                     'drug_names' => $js_drug_names,
                     'patient_names' => $js_patient_names,
                     'template_names' => $js_template_names
@@ -98,11 +104,11 @@ class Prescription extends My_Controller {
     public function suggest()
     {
         if (isset($_POST['diagnostic_template_id']) && $_POST['diagnostic_template_id']) {
-            $this->db->distinct()->select('drug.id, drug.name');
-            $this->db->from('diagnostic');
-            $this->db->join('prescription', 'prescription.diagnostic_id = diagnostic.id', 'INNER');
-            $this->db->join('drug', 'prescription.drug_id = drug.id', 'INNER');
-            $this->db->where('diagnostic.diagnostic_template_id', $_POST['diagnostic_template_id']);
+            $this->db->distinct()->select('drug.id, drug.name, diagnostic_template_prescription.most_used');
+            $this->db->from('diagnostic_template_prescription');
+            $this->db->join('drug', 'diagnostic_template_prescription.drug_id = drug.id', 'INNER');
+            $this->db->where('diagnostic_template_prescription.diagnostic_template_id', $_POST['diagnostic_template_id']);
+            $this->db->order_by('drug.name');
             $query = $this->db->get();
             
             $drugs = $query->result();
@@ -192,42 +198,47 @@ class Prescription extends My_Controller {
                     return;
                 }
             }
-
-            // Update prescription of patient
-            $this->prescription_model->deleteAll(array('diagnostic_id' => $diagnostic_id));
+            
             // Save prescription of patient
+            $ids = [];
             for ($i = 1; $i <= $_POST['index_row']; $i++) {
                 if (!isset($_POST['prescription'][$i])) {
-                    break;
+                    continue;
                 }
                 
                 $prescription =  $_POST['prescription'][$i];
-                if ($prescription['drug-name'] && $prescription['quantity'] && $prescription['time_in_day'] && $prescription['unit_in_time']) {
-                    $drug = $this->drug_model->findOne(array('LOWER(name)' => strtolower($prescription['drug-name'])));
+                if ($prescription['drug_name'] && $prescription['quantity'] && $prescription['time_in_day'] && $prescription['unit_in_time']) {
+                    $drug = $this->drug_model->findOne(array('LOWER(name)' => strtolower($prescription['drug_name'])));
                     if ($drug) {
+                        $pres = $this->prescription_model->findOne(array('id' => $prescription['id']));
+                        
                         $prescription['drug_id'] = $drug->id;
                         $prescription['in_unit_price'] = $drug->in_price;
                         $prescription['unit_price'] = $drug->price;
                         $prescription['drug_name'] = $drug->name;
                         $prescription['diagnostic_id'] = $diagnostic_id;
                         $prescription['date_created'] = date('Y-m-d H:i:s');
-                        unset($prescription['drug-name']);
-                        $drug_id = $this->prescription_model->save($prescription);
-
-                        if (!$drug_id) {
-                            echo json_encode(array('error' => 'Có lỗi. Vui lòng thử lại.'));
-                            return;
+                        
+                        if ($pres) {
+                            $this->db->where('id', $pres->id)->update('prescription', $prescription);
+                            $ids[] = $pres->id;
+                        } else {
+                            unset($prescription['id']);
+                            $ids[] = $this->prescription_model->save($prescription);
                         }
                     } else {
-                        echo json_encode(array('error' => 'Loại thuốc ' . $prescription['drug-name'] . ' không có trong danh sách thuốc. Vui lòng thêm vào danh sách.'));
-                        return;
+                        echo json_encode(array('error' => 'Loại thuốc ' . $prescription['drug_name'] . ' không có trong danh sách thuốc. Vui lòng thêm vào danh sách.'));
+                        exit;
                     }
                 }
             }
+            $this->db->where('id NOT IN (' . implode(',', $ids) . ')', null)->delete('prescription');
+            
+            $this->prescription_by_diagnostic($diagnostic_template_id, 1);
 
             $this->db->trans_complete();
             echo json_encode(array('success' => 'Đã lưu thành công.', 'url' => '/prescription/index?diagnostic_id=' . $diagnostic_id));
-            return;
+            exit;
         }
         
         echo json_encode(array('error' => 'Chưa có dữ liệu'));

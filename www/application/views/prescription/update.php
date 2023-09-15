@@ -42,32 +42,27 @@
     <table class="table table-striped table-bordered" id="prescription">
         <tr>
             <th>Tên thuốc</th>
-            <th style="width: 150px">Số lượng (viên/gói)</th>
-            <th style="width: 150px">Số lần trong ngày</th>
-            <th style="width: 150px">Số viên (gói) mỗi lần</th>
-            <th style="width: 300px">Ghi chú</th>
+            <th style="width: 155px">Số lượng (viên/gói)</th>
+            <th style="width: 80px">Lần/ngày</th>
+            <th style="width: 128px">Viên/gói mỗi lần</th>
+            <th style="width: 350px">Ghi chú</th>
         </tr>
 
 		<?php if (isset($prescriptions) && $prescriptions) { ?>
         <?php foreach ($prescriptions as $i => $prescription) { ?>
             <tr class="drug-item drug-item-display min-row">
                 <td>
-                    <input type="text" value="<?php echo $prescription->name; ?>" class="form-control drug-name" name="prescription[<?php echo $i + 1; ?>][drug-name]"/>
+                	<input type="hidden" value="<?php echo $prescription->id; ?>" name="prescription[<?php echo $i + 1; ?>][id]" />
+                    <input type="text" value="<?php echo $prescription->name; ?>" class="form-control drug-name" name="prescription[<?php echo $i + 1; ?>][drug_name]"/>
                 </td>
                 <td >
-                    <input type="number" value="<?php echo $prescription->quantity; ?>" class="form-control drug-quantity" name="prescription[<?php echo $i + 1; ?>][quantity]"/>
+                    <input type="number" min="0" value="<?php echo $prescription->quantity; ?>" class="form-control drug-quantity" name="prescription[<?php echo $i + 1; ?>][quantity]"/>
                 </td>
                 <td>
-                    <select class="form-control drug-time" name="prescription[<?php echo $i + 1; ?>][time_in_day]">
-                        <option value="1" <?php echo $prescription->time_in_day == 1 ? 'selected' : ''; ?>>1</option>
-                        <option value="2" <?php echo $prescription->time_in_day == 2 ? 'selected' : ''; ?>>2</option>
-                        <option value="3" <?php echo $prescription->time_in_day == 3 ? 'selected' : ''; ?>>3</option>
-                        <option value="4" <?php echo $prescription->time_in_day == 4 ? 'selected' : ''; ?>>4</option>
-                        <option value="5" <?php echo $prescription->time_in_day == 5 ? 'selected' : ''; ?>>5</option>
-                    </select>
+                	<input type="number" min="0" value="<?php echo $prescription->time_in_day; ?>" class="form-control drug-time" name="prescription[<?php echo $i + 1; ?>][time_in_day]"/>
                 </td>
                 <td>
-                	<input type="text" class="form-control drug-unit min-row" name="prescription[<?php echo $i + 1; ?>][unit_in_time]" value="<?php echo $prescription->unit_in_time; ?>" />
+                	<input type="number" min="0" class="form-control drug-unit min-row" name="prescription[<?php echo $i + 1; ?>][unit_in_time]" value="<?php echo $prescription->unit_in_time; ?>" />
                 </td>
                 <td>
                 	<input type="text" class="form-control drug-note min-row" name="prescription[<?php echo $i + 1; ?>][notes]" value="<?php echo $prescription->notes; ?>" />
@@ -78,22 +73,17 @@
             <?php for ($i=1; $i <= 5; $i++) { ?>
                 <tr class="drug-item drug-item-display min-row">
                     <td>
-                        <input type="text" value="" class="form-control drug-name" name="prescription[<?php echo $i; ?>][drug-name]"/>
+                		<input type="hidden" value="" name="prescription[<?php echo $i; ?>][id]" />
+                        <input type="text" value="" class="form-control drug-name" name="prescription[<?php echo $i; ?>][drug_name]"/>
                     </td>
                     <td >
-                        <input type="number" value="" class="form-control drug-quantity" name="prescription[<?php echo $i; ?>][quantity]"/>
+                        <input type="number" min="0" value="" class="form-control drug-quantity" name="prescription[<?php echo $i; ?>][quantity]"/>
                     </td>
                     <td>
-                        <select class="form-control drug-time" name="prescription[<?php echo $i; ?>][time_in_day]">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
+                    	<input type="number" min="0" value="1" class="form-control drug-time" name="prescription[<?php echo $i; ?>][time_in_day]"/>
                     </td>
                     <td>
-                        <input type="text" class="form-control drug-unit min-row" name="prescription[<?php echo $i; ?>][unit_in_time]" />
+                        <input type="number" min="0" value="1" class="form-control drug-unit min-row" name="prescription[<?php echo $i; ?>][unit_in_time]" />
                     </td>
                     <td>
                         <input type="text" class="form-control drug-note min-row" name="prescription[<?php echo $i; ?>][notes]" />
@@ -104,7 +94,7 @@
     </table>
     <input type="text" value="<?php echo (isset($prescriptions) && $prescriptions) ? (count($prescriptions)+1) : $i; ?>" style="display: none" name="index_row">
 
-    <a href="/prescription/index" class="btn btn-success add-new-prescription <?php echo (isset($diagnostic) && $diagnostic) ? '' : 'hide'; ?>">Tạo đơn thuốc mới</a>
+    <a href="/prescription/index?patient_id=<?php echo $patient->id; ?>" class="btn btn-success add-new-prescription <?php echo (isset($patient) && $patient && isset($diagnostic) && $diagnostic) ? '' : 'hide'; ?>">Tạo đơn thuốc mới</a>
     <button type="submit" class="btn btn-success save-item pull-right" style="margin-left: 10px" dianostic_id="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->id : ''; ?>">Lưu đơn thuốc</button>
 
     <button type="button" class="btn btn-primary pull-right btn-print-bill <?php echo (isset($diagnostic) && $diagnostic) ? '' : 'hide'; ?>" id="print_bill" onclick="printBill()" value="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->id : ''; ?>">In hóa đơn</button>

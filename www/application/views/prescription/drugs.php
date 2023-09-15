@@ -8,7 +8,7 @@
     foreach ($drugs as $item) {
     ?>
         <tr>
-            <td width="10%"><input type="checkbox" class="suggested-drug-id" value="<?php echo $item->id; ?>" drug_name="<?php echo $item->name; ?>" /></td>
+            <td width="10%"><input type="checkbox" class="suggested-drug-id" value="<?php echo $item->id; ?>" drug_name="<?php echo $item->name; ?>" <?php echo $item->most_used ? 'checked' : ''; ?> /></td>
             <td align="left" style="padding: 5px;"><?php echo $item->name; ?></td>
         </tr>
     <?php } ?>

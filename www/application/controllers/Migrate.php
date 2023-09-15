@@ -60,6 +60,39 @@ class Migrate extends My_Controller
                 $this->Migration_model->save(['version' => $migrationFileName, 'apply_time' => time()]);
             }
         };
+        
+        $query = $this->db->select('id, name, address, dob, gender, phone')->from('patient')->get();
+        $patients = $query->result();
+        
+        if ($patients) {
+            $used_patients = [];
+            foreach ($patients as $patient) {
+                if (isset($used_patients[$patient->name])) {
+                    if (strtolower($used_patients[$patient->name]['address']) == strtolower($patient->address) || strtolower($used_patients[$patient->name]['phone']) == strtolower($patient->phone)) {
+                        $used_patients[$patient->name]['duplicated_ids'][] = $patient->id;
+                        continue;
+                    }
+                }
+                
+                $used_patients[$patient->name] = ['id' => $patient->id, 'address' => $patient->address, 'dob' => $patient->dob, 'phone' => $patient->phone, 'duplicated_ids' => []];
+            }
+            
+            foreach ($used_patients as $used_patient) {
+                if ($used_patient['duplicated_ids']) {
+                    $this->db->where('patient_id IN (' . implode(',', $used_patient['duplicated_ids']) . ')', null)->update('diagnostic', ['patient_id' => $used_patient['id']]);
+                    print_r($this->db->last_query());
+                    $this->db->where('id IN (' . implode(',', $used_patient['duplicated_ids']) . ')', null)->delete('patient');
+                    print_r($this->db->last_query());
+                }
+            }
+        }
+        
+        $query = $this->db->select('id')->from('diagnostic_template')->get();
+        $templates = $query->result();
+        
+        foreach ($templates as $template) {
+            $this->prescription_by_diagnostic($template->id, 0);
+        }
 
         $this->render('migrate/index', array(
             'result'          => $result,

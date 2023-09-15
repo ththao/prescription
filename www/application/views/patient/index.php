@@ -7,24 +7,24 @@
         <!-- Table -->
         <table class="table table-striped table-bordered" style="margin-bottom: 0px;">
             <tr>
-                <th style="width: 180px">Ngày</th>
-                <th>Tên</th>
-                <th style="width: 100px">Năm sinh</th>
-                <th style="width: 100px">Giới tính</th>
+                <th style="width: 100px">Ngày</th>
+                <th style="width: 250px">Tên</th>
+                <th style="width: 81px">Năm sinh</th>
+                <th style="width: 70px">Nam/Nữ</th>
                 <th>Chẩn đoán</th>
                 <th style="width: 100px">Chi tiết</th>
             </tr>
 
             <tr>
-                <td><input type="text" class="form-control" placeholder="Tìm theo ngày khám" name="date" id="date" value="<?php echo isset($param['date']) ? $param['date'] : '' ?>"></td>
-                <td><input onblur="search()" type="text" class="form-control" placeholder="Tìm theo tên" id="patient-search" value="<?php echo isset($param['name']) ? $param['name'] : '' ?>" name="patient-search"></td>
+                <td><input type="text" class="form-control" placeholder="Tìm ngày" name="date" id="date" value="<?php echo isset($param['date']) ? $param['date'] : '' ?>"></td>
+                <td><input onblur="search()" type="text" class="form-control" placeholder="Tìm tên" id="patient-search" value="<?php echo isset($param['name']) ? $param['name'] : '' ?>" name="patient-search"></td>
                 <td></td><td></td><td></td><td></td>
             </tr>
 
             <?php foreach ($models['patients'] as $item) { ?>
                 <tr class="patient-item patient-item-display">
                     <td><?php echo date("d-m-Y", strtotime($item->date_created)); ?></td>
-                    <td><label class="display"><a href="/patient/index?patient_id=<?php echo $item->id; ?>"><?php echo $item->name ?></a></label></td>
+                    <td title="<?php echo $item->address; ?>"><label class="display"><a href="/patient/index?patient_id=<?php echo $item->id; ?>"><?php echo $item->name ?></a></label></td>
                     <td><label class="display"><?php echo $item->dob ?></label></td>
                     <td><label class="display"><?php echo $item->gender ?></label></td>
                     <td><label class="display"><?php echo $item->diagnostic ?></label></td>
@@ -52,6 +52,7 @@
     </div>
         
     <?php if (isset($param['patient_id']) && $param['patient_id']): ?>
+    	<a href="/prescription/index?patient_id=<?php echo $param['patient_id']; ?>" class="btn btn-success add-new-prescription">Tạo đơn thuốc mới</a>
 		<a href="/patient/index" class="btn btn-warning" id="back">Quay về danh sách</a>
 	<?php endif; ?>
 </form>
