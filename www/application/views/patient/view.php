@@ -9,7 +9,7 @@
 <?php $this->load->view('prescription/prescription'); ?>
 <br><br>
 
-<a href="/patient/index" class="btn btn-warning" id="back">Quay về danh sách</a>
+<a href="/patient/index" class="btn btn-warning pull-left" id="back">Quay về danh sách</a>
 <button type="button" class="btn btn-primary pull-right btn-print-bill-view" id="print_bill" onclick="printBill()">In hóa đơn</button>
 <button type="button" class="btn btn-primary pull-right" id="print_prescription" onclick="printPrescription()">In đơn thuốc</button>
 
