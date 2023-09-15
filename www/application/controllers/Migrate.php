@@ -80,9 +80,9 @@ class Migrate extends My_Controller
             foreach ($used_patients as $used_patient) {
                 if ($used_patient['duplicated_ids']) {
                     $this->db->where('patient_id IN (' . implode(',', $used_patient['duplicated_ids']) . ')', null)->update('diagnostic', ['patient_id' => $used_patient['id']]);
-                    print_r($this->db->last_query());
+                    //print_r($this->db->last_query());
                     $this->db->where('id IN (' . implode(',', $used_patient['duplicated_ids']) . ')', null)->delete('patient');
-                    print_r($this->db->last_query());
+                    //print_r($this->db->last_query());
                 }
             }
         }

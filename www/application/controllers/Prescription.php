@@ -210,20 +210,23 @@ class Prescription extends My_Controller {
                 if ($prescription['drug_name'] && $prescription['quantity'] && $prescription['time_in_day'] && $prescription['unit_in_time']) {
                     $drug = $this->drug_model->findOne(array('LOWER(name)' => strtolower($prescription['drug_name'])));
                     if ($drug) {
-                        $pres = $this->prescription_model->findOne(array('id' => $prescription['id']));
+                        $pres = null;
+                        if (isset($prescription['id']) && $prescription['id']) {
+                            $pres = $this->prescription_model->findOne(array('id' => $prescription['id']));
+                            unset($prescription['id']);
+                        }
                         
                         $prescription['drug_id'] = $drug->id;
                         $prescription['in_unit_price'] = $drug->in_price;
                         $prescription['unit_price'] = $drug->price;
                         $prescription['drug_name'] = $drug->name;
                         $prescription['diagnostic_id'] = $diagnostic_id;
-                        $prescription['date_created'] = date('Y-m-d H:i:s');
                         
                         if ($pres) {
                             $this->db->where('id', $pres->id)->update('prescription', $prescription);
                             $ids[] = $pres->id;
                         } else {
-                            unset($prescription['id']);
+                            $prescription['date_created'] = date('Y-m-d H:i:s');
                             $ids[] = $this->prescription_model->save($prescription);
                         }
                     } else {
@@ -232,7 +235,7 @@ class Prescription extends My_Controller {
                     }
                 }
             }
-            $this->db->where('id NOT IN (' . implode(',', $ids) . ')', null)->delete('prescription');
+            $this->db->where('id NOT IN (' . implode(',', $ids) . ')', null)->where('diagnostic_id', $diagnostic_id)->delete('prescription');
             
             $this->prescription_by_diagnostic($diagnostic_template_id, 1);
 

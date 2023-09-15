@@ -202,20 +202,16 @@
         $(".add-column").click(function() {
             var i = $('input[name=index_row]').val();
 
-            var html = '' +
-                '<tr class="drug-item drug-item-display min-row">' +
+            var html = '<tr class="drug-item drug-item-display min-row">' +
                 '<td>' +
                 '<span role="status" aria-live="polite" class="ui-helper-hidden-accessible"></span>' +
-                '<input type="text" value="" class="form-control drug-name ui-autocomplete-input" autocomplete="off" name="prescription['+ i +'][drug-name]"/></td>' +
-                '<td><input type="number" value="" class="form-control drug-quantity" name="prescription['+ i +'][quantity]"/></td>' +
-                '<td><select class="form-control drug-time" name="prescription['+ i +'][time_in_day]">' +
-                '<option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>' +
-                '</select></td>' +
-                '<td><input type="text" class="form-control drug-unit min-row" name="prescription['+ i +'][unit_in_time]" />' +
-                '</select></td></td>' +
-                '<td><input type="text" class="form-control drug-note min-row" name="prescription['+ i +'][notes]" />' +
-                '</td></tr>';
-            $("#prescription").append("" + html);
+                '<input type="text" value="" class="form-control drug-name ui-autocomplete-input" autocomplete="off" name="prescription['+ i +'][drug_name]"/></td>' +
+                '<td><input type="number" min="0" value="" class="form-control drug-quantity" name="prescription['+ i +'][quantity]"/></td>' +
+                '<td><input type="number" min="0" value="1" class="form-control drug-time" name="prescription['+ i +'][time_in_day]"/></td>' +
+                '<td><input type="number" min="0" value="1" class="form-control drug-unit min-row" name="prescription['+ i +'][unit_in_time]" /></td>' +
+                '<td><input type="text" class="form-control drug-note min-row" name="prescription['+ i +'][notes]" /></td>' +
+                '</tr>';
+            $("#prescription").append(html);
             i++;
             $('input[name=index_row]').attr('value', i);
         });
