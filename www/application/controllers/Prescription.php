@@ -221,14 +221,25 @@ class Prescription extends My_Controller {
                 }
                 
                 $prescription =  $_POST['prescription'][$i];
+                if (!isset($prescription['quantity']) || !$prescription['quantity']) {
+                    $prescription['quantity'] = 1;
+                    $prescription['time_in_day'] = 1;
+                    $prescription['unit_in_time'] = 1;
+                }
+                if (!isset($prescription['time_in_day']) || !$prescription['time_in_day']) {
+                    $prescription['time_in_day'] = 1;
+                }
+                if (!isset($prescription['unit_in_time']) || !$prescription['unit_in_time']) {
+                    $prescription['unit_in_time'] = 1;
+                }
                 if ($prescription['drug_name'] && $prescription['quantity'] && $prescription['time_in_day'] && $prescription['unit_in_time']) {
                     $drug = $this->drug_model->findOne(array('LOWER(name)' => strtolower($prescription['drug_name'])));
                     if ($drug) {
                         $pres = null;
                         if (isset($prescription['id']) && $prescription['id']) {
                             $pres = $this->prescription_model->findOne(array('id' => $prescription['id']));
-                            unset($prescription['id']);
                         }
+                        unset($prescription['id']);
                         
                         $prescription['drug_id'] = $drug->id;
                         $prescription['in_unit_price'] = $drug->in_price;
