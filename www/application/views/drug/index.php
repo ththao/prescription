@@ -17,6 +17,7 @@
 
 <div class="btn-group">
 	<a href="/drug/index" class="btn btn-success">Danh sách thuốc</a>
+	<a href="/drug/import" class="btn btn-default">Thêm thuốc từ file</a>
 	<a href="/report/daily" class="btn btn-default">Báo cáo ngày</a>
 	<a href="/report/monthly" class="btn btn-default">Báo cáo tháng</a>
 	<a href="/auth/password" class="btn btn-default">Đổi mật khẩu</a>

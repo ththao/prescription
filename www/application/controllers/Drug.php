@@ -25,6 +25,29 @@ class Drug extends My_Controller
 
         $this->render('drug/index', array('models' => $data, 'search' => ''));
 	}
+	
+	public function import()
+	{
+	    if (isset($_POST['submit'])) {
+            $handle = fopen($_FILES['drugs']['tmp_name'], "r");
+            $headers = fgetcsv($handle, null, ",");
+            while (($data = fgetcsv($handle, null, ",")) !== FALSE) {
+                $drug = $this->drug_model->findOne(array('name' => $data['1']));
+                if (!$drug) {
+                    $drug['name'] = $data[1];
+                    $drug['unit'] = $data[2];
+                    $drug['price'] = 0;
+                    $drug['in_price'] = $data[6];
+                    $drug['note'] = $data[4];
+                    $drug['date_created'] = date('Y-m-d H:i:s');
+                    
+                    $this->drug_model->save($drug);
+                }
+            }
+            fclose($handle);
+        }
+	    $this->render('drug/import');
+	}
 
     public function search()
     {
