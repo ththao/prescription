@@ -33,7 +33,7 @@ class Patient extends My_Controller {
         
         $data['pagination'] = $this->pagination->create_links();
         
-        $this->render('patient/index', array('models' => $data, 'param' => $param));
+        $this->render('patient/index', array('models' => $data, 'param' => $param, 'history' => 0));
 	}
 
     public function view($id)
@@ -53,5 +53,32 @@ class Patient extends My_Controller {
         $this->diagnostic_model->delete($diagnostic->id);
         
         redirect("/patient");
+    }
+    
+    public function history()
+    {
+        if (isset($_POST['patient_id']) && $_POST['patient_id']) {
+            $patients = $this->patient_model->search(['patient_id' => $_POST['patient_id']], null, null);
+            if ($patients) {
+                foreach ($patients as $patient) {
+                    $prescription = $this->prescription_model->findAll(array('diagnostic_id' => $patient->diagnostic_id));
+                    
+                    $pres_html = '';
+                    foreach ($prescription as $drug) {
+                        $pres_html .= ($pres_html ? '&#013;' : '') . (' - ' . $drug->drug_name . ' (' . $drug->quantity . ' viên/gói - ngày ' . $drug->time_in_day . ' lần)');
+                    }
+                    $patient->prescription = $pres_html;
+                }
+            }
+            $data['patients'] = $patients;
+            
+            $html = $this->load->view('patient/index', array('models' => $data, 'history' => 1), true);
+            
+            echo json_encode(['success' => 1, 'html' => $html]);
+            exit();
+        }
+        
+        echo json_encode(['success' => 0]);
+        exit();
     }
 }

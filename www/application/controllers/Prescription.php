@@ -24,20 +24,32 @@ class Prescription extends My_Controller {
             $query = $this->db->select('id, name, address, dob, gender, phone')->from('patient')->get();
             $patients = $query->result();
             $patient_names = array();
+            $patient_phones = array();
             if ($patients) {
                 foreach ($patients as $patient) {
                     $patient_names[] = [
                         'id' => $patient->id,
                         'value' => $patient->name,
-                        'label' => $patient->name . ' (' . $patient->address . ')',
+                        'label' => $patient->name . ($patient->address ? (' (' . $patient->address . ')') : ''),
                         'address' => $patient->address,
                         'dob' => $patient->dob,
                         'gender' => $patient->gender,
                         'phone' => $patient->phone
                     ];
+                    
+                    $patient_phones[] = [
+                        'id' => $patient->id,
+                        'value' => $patient->phone,
+                        'label' => $patient->phone,
+                        'address' => $patient->address,
+                        'dob' => $patient->dob,
+                        'gender' => $patient->gender,
+                        'name' => $patient->name
+                    ];
                 }
             }
             $js_patient_names = json_encode($patient_names);
+            $js_patient_phones = json_encode($patient_phones);
             
             $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->get();
             $templates = $query->result();
@@ -57,6 +69,7 @@ class Prescription extends My_Controller {
                 $this->render('prescription/update', array(
                     'drug_names' => $js_drug_names,
                     'patient_names' => $js_patient_names,
+                    'patient_phones' => $js_patient_phones,
                     'template_names' => $js_template_names,
                     'patient' => $patient,
                     'diagnostic' => $diagnostic,
@@ -72,6 +85,7 @@ class Prescription extends My_Controller {
                     'patient' => $patient,
                     'drug_names' => $js_drug_names,
                     'patient_names' => $js_patient_names,
+                    'patient_phones' => $js_patient_phones,
                     'template_names' => $js_template_names
                 ));
             }

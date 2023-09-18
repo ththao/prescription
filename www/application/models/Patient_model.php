@@ -14,7 +14,7 @@ class Patient_model extends MY_Model {
     {
         $this->db->select(
             'patient.id, patient.name, patient.dob, patient.address, patient.phone, patient.gender,
-            diagnostic.date_created, diagnostic.diagnostic, diagnostic.id AS diagnostic_id'
+            diagnostic.date_created, diagnostic.diagnostic, diagnostic.id AS diagnostic_id, diagnostic.note'
         );
         $this->db->from('patient');
         $this->db->join('diagnostic', 'diagnostic.patient_id = patient.id', 'INNER');
@@ -29,7 +29,9 @@ class Patient_model extends MY_Model {
             $this->db->where('STRFTIME("%d-%m-%Y", diagnostic.date_created) = ', $search_param['date']);
         }
         $this->db->order_by('diagnostic.date_created DESC');
-        $this->db->limit($limit, $start);
+        if ($limit) {
+            $this->db->limit($limit, $start);
+        }
         
         $query = $this->db->get();
         

@@ -37,7 +37,10 @@
         </tr>
     </table>
 
-    <div style="text-align: center; font-size: 28px">Đơn thuốc <button type="button" class="btn btn-success pull-right add-column">Thêm thuốc</button></div>
+    <div style="text-align: center; font-size: 28px">Đơn thuốc 
+        <button type="button" class="btn btn-success pull-right add-column">Thêm thuốc</button>
+        <button type="button" class="btn btn-success pull-right btn-view-history <?php echo (isset($patient) && $patient) ? '' : 'hide'; ?>" style="margin-right: 10px;" patient_id="<?php echo (isset($patient) && $patient) ? $patient->id : ''; ?>">Xem lịch sử</button>
+    </div>
     <!-- Table -->
     <table class="table table-striped table-bordered" id="prescription">
         <tr>
@@ -122,6 +125,25 @@
     </div>
 </div>
 
+<div class="modal fade" id="view-history" >
+    <div class="modal-dialog modal-dialog-centered asb-modal-dialog" style="width: 1280px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Lịch sử khám chữa bệnh</h4>
+                <button type="button" class="close asb-btn-icon" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-primary pull-right" href="#" data-dismiss="modal">Tắt</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     $(document).ready(function() {
         $(document).on('keydown.autocomplete', ".drug-name", function() {
@@ -139,6 +161,22 @@
     			$('.gender').val(ui.item.gender);
     			$('.address').val(ui.item.address);
     			$('.phone').val(ui.item.phone);
+    			
+    			$('.btn-view-history').attr('patient_id', ui.item.id).removeClass('hide');
+			}
+        });
+        
+        var patient_phones = <?php echo $patient_phones; ?>;
+        $(".phone").autocomplete({
+            source: patient_phones,
+            select: function (event, ui) {
+    			$('.patient_id').val(ui.item.id);
+    			$('.dob').val(ui.item.dob);
+    			$('.gender').val(ui.item.gender);
+    			$('.address').val(ui.item.address);
+    			$('.patient-name').val(ui.item.name);
+    			
+    			$('.btn-view-history').attr('patient_id', ui.item.id).removeClass('hide');
 			}
         });
         
@@ -166,6 +204,27 @@
                     });
                 }
 			}
+        });
+        
+        $(document).on('click', '.btn-view-history', function(e) {
+        	e.preventDefault();
+        	
+        	var selected = $(this);
+        	
+        	$.ajax({
+                url:"/patient/history",
+                data: {
+                	patient_id: $(selected).attr('patient_id')
+                },
+                type: "POST",
+                dataType: 'json',
+                success:function(data) {
+                    if (data.success) {
+                    	$('#view-history').find('.modal-body').html(data.html);
+                        $('#view-history').modal('show');
+                    }
+                }
+            });
         });
         
         $(document).on('click', '#suggest-drugs .select-all', function() {
