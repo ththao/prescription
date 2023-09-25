@@ -438,6 +438,12 @@
         				$(this).find('.drug-unit-in-time').val(1);
         				$(this).find('.drug-note').val('');
             		});
+            		$('.service-item').each(function() {
+            			$(this).find('.service-name').val('');
+        				$(this).find('.service-quantity').val('');
+        				$(this).find('.service-id').val('');
+        				$(this).find('.service-notes').val('');
+            		});
     				$('.btn-print-bill').addClass('hide');
     				$('.btn-print-prescription').addClass('hide');
                 },
