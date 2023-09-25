@@ -11,26 +11,41 @@
         <tr>
             <th width="40px">STT</th>
             <th width="240px">Tên thuốc</th>
-            <th style="text-align: center">Số lượng (viên/gói)</th>
+            <th style="text-align: center">Số lượng</th>
             <th style="text-align: center">Đơn giá (VNĐ)</th>
             <th style="text-align: center">Thành tiền (VNĐ)</th>
         </tr>
-        <?php $total = 0;
+        <?php 
+        $total = 0;
         $index = 1;
-        foreach ($prescription as $item) {
-            $drug = $this->drug_model->findOne(array('id' => $item->drug_id));
-            if ($drug->name) { ?>
+        ?>
+        
+        <?php foreach ($orders as $item) { ?>
                 <tr>
                     <td width="40px"><?php echo $index; ?></td>
-                    <td style="text-align: left"><?php echo $drug->name; ?></td>
+                    <td style="text-align: left"><?php echo $item->service_name; ?></td>
                     <td><?php echo $item->quantity; ?></td>
-                    <td><?php echo number_format($drug->price, 0, ',', '.'); ?></td>
-                    <td><?php echo number_format($item->quantity * $drug->price, 0, ',', '.'); ?></td>
+                    <td><?php echo number_format($item->price, 0, ',', '.'); ?></td>
+                    <td><?php echo number_format($item->quantity * $item->price, 0, ',', '.'); ?></td>
                 </tr>
-            <?php $total += $item->quantity * $drug->price;
-            }
+            <?php 
+            $total += $item->quantity * $item->price;
             $index++;
-        } ?>
+            ?>
+        <?php } ?>
+        <?php foreach ($prescription as $item) { ?>
+                <tr>
+                    <td width="40px"><?php echo $index; ?></td>
+                    <td style="text-align: left"><?php echo $item->drug_name; ?></td>
+                    <td><?php echo $item->quantity . ' ' . $item->unit; ?></td>
+                    <td><?php echo number_format($item->unit_price, 0, ',', '.'); ?></td>
+                    <td><?php echo number_format($item->quantity * $item->unit_price, 0, ',', '.'); ?></td>
+                </tr>
+            <?php 
+            $total += $item->quantity * $item->unit_price;
+            $index++;
+            ?>
+        <?php } ?>
     </table>
 
     <table width="100%" border="0">

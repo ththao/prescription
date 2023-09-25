@@ -6,7 +6,7 @@ class Prescription extends My_Controller {
     {
         parent::__construct();
 
-        $this->loadModel(array('patient_model', 'drug_model', 'prescription_model', 'diagnostic_model'));
+        $this->loadModel(array('patient_model', 'drug_model', 'prescription_model', 'service_model', 'order_model', 'diagnostic_model'));
     }
 
 	public function index()
@@ -25,6 +25,23 @@ class Prescription extends My_Controller {
                 }
             }
             $js_drug_names = json_encode($drug_names);
+            
+            if (SERVICES == 'ON') {
+                $services = $this->service_model->findAll();
+                $service_names = array();
+                if ($services) {
+                    foreach ($services as $service) {
+                        $service_names[] = [
+                            'id' => $service->id,
+                            'value' => $service->service_name,
+                            'label' => $service->service_name
+                        ];
+                    }
+                }
+                $js_service_names = json_encode($service_names);
+            } else {
+                $js_service_names = '';
+            }
             
             $query = $this->db->select('id, name, address, dob, gender, phone')->from('patient')->get();
             $patients = $query->result();
@@ -70,15 +87,22 @@ class Prescription extends My_Controller {
                 $diagnostic = $this->diagnostic_model->findOne(array('id' => $diagnostic_id));
                 $patient = $this->patient_model->findOne(array('id' => $diagnostic->patient_id));
                 $prescriptions = $this->prescription_model->getList($diagnostic->id);
+                if (SERVICES == 'ON') {
+                    $orders = $this->order_model->getList($diagnostic->id);
+                } else {
+                    $orders = null;
+                }
                 
                 $this->render('prescription/update', array(
                     'drug_names' => $js_drug_names,
                     'patient_names' => $js_patient_names,
                     'patient_phones' => $js_patient_phones,
                     'template_names' => $js_template_names,
+                    'service_names' => $js_service_names,
                     'patient' => $patient,
                     'diagnostic' => $diagnostic,
-                    'prescriptions' => $prescriptions
+                    'prescriptions' => $prescriptions,
+                    'orders' => $orders
                 ));
             } else {
                 if (isset($_GET['patient_id']) && $_GET['patient_id']) {
@@ -89,6 +113,7 @@ class Prescription extends My_Controller {
                 $this->render('prescription/update', array(
                     'patient' => $patient,
                     'drug_names' => $js_drug_names,
+                    'service_names' => $js_service_names,
                     'patient_names' => $js_patient_names,
                     'patient_phones' => $js_patient_phones,
                     'template_names' => $js_template_names
@@ -116,8 +141,13 @@ class Prescription extends My_Controller {
         $diagnostic = $this->diagnostic_model->findOne(array('id' => $id));
         $patient = $this->patient_model->findOne(array('id' => $diagnostic->patient_id));
         $prescription = $this->prescription_model->getList($diagnostic->id);
+        if (SERVICES == 'ON') {
+            $orders = $this->order_model->getList($diagnostic->id);
+        } else {
+            $orders = [];
+        }
 
-        $this->render('prescription/bill', array('patient' => $patient, 'diagnostic' => $diagnostic, 'prescription' => $prescription));
+        $this->render('prescription/bill', array('patient' => $patient, 'diagnostic' => $diagnostic, 'prescription' => $prescription, 'orders' => $orders));
     }
     
     public function suggest()
@@ -218,6 +248,44 @@ class Prescription extends My_Controller {
                 }
             }
             
+            if (SERVICES == 'ON') {
+                // Save orders of patient
+                $order_ids = [];
+                for ($i = 1; $i <= $_POST['service_index_row']; $i++) {
+                    if (!isset($_POST['order'][$i])) {
+                        continue;
+                    }
+                    
+                    if ($_POST['order'][$i]['service_id']) {
+                        $service = $this->service_model->findOne(array('id' => $_POST['order'][$i]['service_id']));
+                        
+                        $pres = null;
+                        if (isset($_POST['order'][$i]['id']) && $_POST['order'][$i]['id']) {
+                            $pres = $this->order_model->findOne(array('id' => $_POST['order'][$i]['id']));
+                        }
+                        unset($_POST['order'][$i]['id']);
+                        
+                        $order['service_id'] = $_POST['order'][$i]['service_id'];
+                        $order['price'] = $service->price;
+                        $order['quantity'] = $_POST['order'][$i]['quantity'] ? $_POST['order'][$i]['quantity'] : 1;
+                        $order['notes'] = $_POST['order'][$i]['notes'];
+                        $order['diagnostic_id'] = $diagnostic_id;
+                        
+                        if ($pres) {
+                            $this->db->where('id', $pres->id)->update('orders', $order);
+                            $order_ids[] = $pres->id;
+                        } else {
+                            $order['date_created'] = date('Y-m-d H:i:s');
+                            $order_ids[] = $this->order_model->save($order);
+                        }
+                    } else {
+                        echo json_encode(array('error' => 'Kỹ thuật ' . $_POST['order'][$i]['service_name'] . ' không có trong danh sách. Vui lòng thêm vào danh sách.'));
+                        exit;
+                    }
+                }
+                $this->db->where('id NOT IN (' . implode(',', $order_ids) . ')', null)->where('diagnostic_id', $diagnostic_id)->delete('orders');
+            }
+            
             // Save prescription of patient
             $ids = [];
             for ($i = 1; $i <= $_POST['index_row']; $i++) {
@@ -231,12 +299,10 @@ class Prescription extends My_Controller {
                     $prescription['time_in_day'] = 1;
                     $prescription['unit_in_time'] = 1;
                 }
-                if (!isset($prescription['time_in_day']) || !$prescription['time_in_day']) {
-                    $prescription['time_in_day'] = 1;
-                }
-                if (!isset($prescription['unit_in_time']) || !$prescription['unit_in_time']) {
-                    $prescription['unit_in_time'] = 1;
-                }
+                
+                $prescription['time_in_day'] = (!isset($prescription['time_in_day']) || !$prescription['time_in_day']) ? 1 : $prescription['time_in_day'];
+                $prescription['unit_in_time'] = (!isset($prescription['unit_in_time']) || !$prescription['unit_in_time']) ? 1 : $prescription['unit_in_time'];
+                
                 if ($prescription['drug_name'] && $prescription['quantity'] && $prescription['time_in_day'] && $prescription['unit_in_time']) {
                     $drug = $this->drug_model->findOne(array('LOWER(name)' => strtolower($prescription['drug_name'])));
                     if ($drug) {
@@ -288,7 +354,18 @@ class Prescription extends My_Controller {
                 $drugs[] = ['drug_name' => $drug->drug_name, 'quantity' => $drug->quantity, 'time_in_day' => $drug->time_in_day, 'unit_in_time' => $drug->unit_in_time, 'notes' => $drug->notes, 'unit' => $drug->unit];
             }
             
-            echo json_encode(['success' => 1, 'diagnostic' => $diagnostic->diagnostic, 'notes' => $diagnostic->notes, 'drugs' => $drugs]);
+            $services = [];
+            if (SERVICES == 'ON') {
+                $orders = $this->order_model->getList($diagnostic->id);
+                
+                if ($orders) {
+                    foreach ($orders as $order) {
+                        $services[] = ['service_id' => $order->service_id, 'service_name' => $order->service_name, 'quantity' => $order->quantity, 'notes' => $order->notes];
+                    }
+                }
+            }
+            
+            echo json_encode(['success' => 1, 'diagnostic' => $diagnostic->diagnostic, 'notes' => $diagnostic->note, 'drugs' => $drugs, 'services' => $services]);
             exit();
         }
         

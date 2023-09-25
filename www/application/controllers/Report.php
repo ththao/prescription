@@ -31,21 +31,44 @@ class Report extends My_Controller
         $this->render('report/monthly', array('data' => $data, 'month' => $month, 'year' => $year, 'drug_name' => $drug_name));
 	}
 	
-	private function getReportData($date, $drug_name)
+	private function getReportData($date, $search_name)
 	{
-	    $this->db->select('prescription.drug_name, SUM(prescription.quantity) AS drug_quantity, SUM(COALESCE(in_unit_price, in_price) * quantity) AS in_price, SUM(COALESCE(unit_price, price) * quantity) AS price');
-	    $this->db->from('prescription');
-	    $this->db->join('drug', 'prescription.drug_id = drug.id', 'LEFT OUTER');
-	    if ($drug_name) {
-	       $this->db->like('prescription.drug_name', $drug_name);
+	    
+	    $where1 = '';
+	    $where2 = '';
+	    if ($search_name) {
+	        $where1 .= ' WHERE prescription.drug_name LIKE "%' . $search_name . '%"';
+	        $where2 .= ' WHERE services.service_name LIKE "%' . $search_name . '%"';
 	    }
 	    if ($date) {
-	        $this->db->like('prescription.date_created', $date);
+	        $where1 .= ($where1 ? ' AND' : ' WHERE') . ' prescription.date_created LIKE "%' . $date . '%"';
+	        $where2 .= ($where2 ? ' AND' : ' WHERE') . ' orders.date_created LIKE "%' . $date . '%"';
 	    }
-	    $this->db->group_by('prescription.drug_name');
-	    $this->db->order_by('prescription.drug_name');
 	    
-	    $query = $this->db->get(); 
+	    if (SERVICES == 'ON') {
+    	    $sql = '
+                SELECT name, quantity, in_price, price FROM
+                (
+                SELECT prescription.drug_name AS name, SUM(prescription.quantity) AS quantity, SUM(COALESCE(prescription.unit_price, drug.price) * prescription.quantity) AS in_price, SUM(COALESCE(prescription.unit_price, drug.price) * quantity) AS price
+                FROM prescription LEFT OUTER JOIN drug ON prescription.drug_id = drug.id' . $where1 . '
+                GROUP BY LOWER(prescription.drug_name)
+                UNION
+                SELECT services.service_name AS name, SUM(orders.quantity) AS quantity, 0 AS in_price, SUM(COALESCE(orders.price, services.price) * orders.quantity) AS price
+                FROM orders LEFT OUTER JOIN services ON orders.service_id = services.id' . $where2 . '
+                GROUP BY LOWER(services.service_name)
+                ) report
+                ORDER BY LOWER(report.name)
+            ';
+	    } else {
+	        $sql = '
+                SELECT prescription.drug_name AS name, SUM(prescription.quantity) AS quantity, SUM(COALESCE(prescription.unit_price, drug.price) * prescription.quantity) AS in_price, SUM(COALESCE(prescription.unit_price, drug.price) * quantity) AS price
+                FROM prescription LEFT OUTER JOIN drug ON prescription.drug_id = drug.id' . $where1 . '
+                GROUP BY LOWER(prescription.drug_name)
+                ORDER BY LOWER(prescription.drug_name)
+            ';
+	    }
+	    
+	    $query = $this->db->query($sql);
 	    return $query->result();
 	}
 }

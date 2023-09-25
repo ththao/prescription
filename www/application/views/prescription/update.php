@@ -6,7 +6,9 @@
 
 <!-- Main component for a primary marketing message or call to action -->
 <form id="pres" method="post" style="margin-right: 0px" >
-    <div style="text-align: center; font-size: 28px">Thông tin bệnh nhân</div>
+    <div style="text-align: center; font-size: 28px">Thông tin bệnh nhân
+        <button type="button" class="btn btn-success pull-right btn-view-history <?php echo (isset($patient) && $patient) ? '' : 'hide'; ?>" style="margin-right: 10px;" patient_id="<?php echo (isset($patient) && $patient) ? $patient->id : ''; ?>">Xem lịch sử</button>
+    </div>
     <!-- Table -->
     <table class="table table-bordered" width="100%" border="0">
         <tr class="min-row">
@@ -36,10 +38,42 @@
             <td colspan="3"><input type="text" class="form-control diagnostic-note" placeholder="Ghi chú" name="diagnostic[note]" value="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->note : ''; ?>"></td>
         </tr>
     </table>
+    
+    <?php if (SERVICES == 'ON'): ?>
+	<div style="text-align: center; font-size: 28px">Chỉ định <button type="button" class="btn btn-success pull-right add-service-item">Thêm chỉ định</button></div>
+    <!-- Table -->
+    <table class="table table-striped table-bordered" id="services">
+        <tr>
+            <th>Kỹ thuật</th>
+            <th style="width: 90px">Số lượng</th>
+            <th style="width: 350px">Ghi chú</th>
+            <th style="width: 15px;"></th>
+        </tr>
+
+		<?php if (isset($orders) && $orders) { ?>
+        <?php foreach ($orders as $i => $order) { ?>
+            <tr class="service-item service-item-display min-row">
+                <td>
+                	<input type="hidden" value="<?php echo $order->id; ?>" name="order[<?php echo $i + 1; ?>][id]" />
+                    <input type="text" value="<?php echo $order->service_name; ?>" class="form-control service-name" name="order[<?php echo $i + 1; ?>][service_name]"/>
+                	<input type="hidden" value="<?php echo $order->service_id; ?>" class="service-id" name="order[<?php echo $i + 1; ?>][service_id]" />
+                </td>
+                <td>
+                    <input type="number" min="0" value="<?php echo $order->quantity; ?>" class="form-control service-quantity" name="order[<?php echo $i + 1; ?>][quantity]"/>
+                </td>
+                <td>
+                	<input type="text" class="form-control service-notes min-row" name="service[<?php echo $i + 1; ?>][notes]" value="<?php echo $order->notes; ?>" />
+                </td>
+                <td><a class="remove-service-item"><span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red; padding-top: 6px;"></span></a></td>
+            </tr>
+        <?php } ?>
+        <?php } ?>
+    </table>
+    <input type="hidden" value="<?php echo (isset($orders) && $orders) ? (count($orders)+1) : 1; ?>" name="service_index_row">
+	<?php endif; ?>
 
     <div style="text-align: center; font-size: 28px">Đơn thuốc 
-        <button type="button" class="btn btn-success pull-right add-column">Thêm thuốc</button>
-        <button type="button" class="btn btn-success pull-right btn-view-history <?php echo (isset($patient) && $patient) ? '' : 'hide'; ?>" style="margin-right: 10px;" patient_id="<?php echo (isset($patient) && $patient) ? $patient->id : ''; ?>">Xem lịch sử</button>
+        <button type="button" class="btn btn-success pull-right add-drug-item">Thêm thuốc</button>
     </div>
     <!-- Table -->
     <table class="table table-striped table-bordered" id="prescription">
@@ -49,6 +83,7 @@
             <th style="width: 80px">Lần/ngày</th>
             <th style="width: 90px">SL mỗi lần</th>
             <th style="width: 350px">Ghi chú</th>
+            <th style="width: 15px;"></th>
         </tr>
 
 		<?php if (isset($prescriptions) && $prescriptions) { ?>
@@ -71,6 +106,7 @@
                 <td>
                 	<input type="text" class="form-control drug-note min-row" name="prescription[<?php echo $i + 1; ?>][notes]" value="<?php echo $prescription->notes; ?>" />
                 </td>
+                <td><a class="remove-drug-item"><span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red; padding-top: 6px;"></span></a></td>
             </tr>
         <?php } ?>
         <?php } else { ?>
@@ -93,11 +129,12 @@
                     <td>
                         <input type="text" class="form-control drug-note min-row" name="prescription[<?php echo $i; ?>][notes]" />
                     </td>
+                    <td><a class="remove-drug-item"><span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red; padding-top: 6px;"></span></a></td>
                 </tr>
             <?php } ?>
         <?php } ?>
     </table>
-    <input type="text" value="<?php echo (isset($prescriptions) && $prescriptions) ? (count($prescriptions)+1) : $i; ?>" style="display: none" name="index_row">
+    <input type="hidden" value="<?php echo (isset($prescriptions) && $prescriptions) ? (count($prescriptions)+1) : $i; ?>" name="index_row">
 
     <a href="/prescription/index?patient_id=<?php echo $patient->id; ?>" class="btn btn-success pull-left add-new-prescription <?php echo (isset($patient) && $patient && isset($diagnostic) && $diagnostic) ? '' : 'hide'; ?>">Tạo đơn thuốc mới</a>
     <button type="submit" class="btn btn-success save-item pull-right" style="margin-left: 10px" dianostic_id="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->id : ''; ?>">Lưu đơn thuốc</button>
@@ -158,6 +195,20 @@
     			}
             });
         });
+        
+        <?php if (SERVICES == 'ON'): ?>
+        $(document).on('keydown.autocomplete', ".service-name", function() {
+            $(this).autocomplete({
+                source: <?php echo $service_names; ?>,
+                select: function (event, ui) {
+    				$(this).parents('.service-item').find('.service-id').val(ui.item.id);
+    				$('.btn-print-bill').addClass('hide');
+    				$('.btn-print-prescription').addClass('hide');
+    			}
+            });
+        });
+        <?php endif; ?>
+        
         $(document).on("change", ".drug-name, .patient-name, .phone, .diagnostic, .diagnostic-note, .drug-item input", function() {
 			$('.btn-print-bill').addClass('hide');
 			$('.btn-print-prescription').addClass('hide');
@@ -278,8 +329,33 @@
 			$('.btn-print-prescription').addClass('hide');
         	$('#suggest-drugs').modal('hide');
         });
+        
+        $(document).on('click', '.add-service-item', function() {
+        	var i = $('input[name=service_index_row]').val();
 
-        $(".add-column").click(function() {
+            var html = '<tr class="service-item service-item-display min-row">';
+            html += '<td>';
+            html += '<input type="hidden" value="" name="order[' + i + '][id]" />';
+            html += '<input type="text" value="" class="form-control service-name" name="order[' + i + '][service_name]"/>';
+            html += '<input type="hidden" value="" class="service-id" name="order[' + i + '][service_id]" />';
+            html += '</td>';
+            html += '<td><input type="number" min="0" value="1" class="form-control service-quantity" name="order[' + i + '][quantity]"/></td>';
+            html += '<td><input type="text" class="form-control service-notes min-row" name="order[' + i + '][notes]" value="" /></td>';
+            html += '<td><a class="remove-service-item"><span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red; padding-top: 6px;"></span></a></td>';
+            html += '</tr>';
+            
+            $("#services").append(html);
+            i++;
+            $('input[name=service_index_row]').attr('value', i);
+        });
+        
+        $(document).on('click', '.remove-service-item', function(event) {
+        	event.preventDefault();
+        	
+        	$(this).parents('.service-item').remove();
+        });
+
+        $(".add-drug-item").click(function() {
             var i = $('input[name=index_row]').val();
 
             var html = '<tr class="drug-item drug-item-display min-row">' +
@@ -290,10 +366,17 @@
                 '<td><input type="number" min="0" value="1" class="form-control drug-time" name="prescription['+ i +'][time_in_day]"/></td>' +
                 '<td><input type="number" min="0" value="1" class="form-control drug-unit-in-time min-row" name="prescription['+ i +'][unit_in_time]" /></td>' +
                 '<td><input type="text" class="form-control drug-note min-row" name="prescription['+ i +'][notes]" /></td>' +
+                '<td><a class="remove-drug-item"><span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red; padding-top: 6px;"></span></a></td>' +
                 '</tr>';
             $("#prescription").append(html);
             i++;
             $('input[name=index_row]').attr('value', i);
+        });
+        
+        $(document).on('click', '.remove-drug-item', function(event) {
+        	event.preventDefault();
+        	
+        	$(this).parents('.drug-item').remove();
         });
 
         $('.save-item').click(function (event) {
@@ -387,6 +470,29 @@
                         			$('.drug-item').last().find('.drug-time').val(drug.time_in_day);
                         			$('.drug-item').last().find('.drug-unit-in-time').val(drug.unit_in_time);
                         			$('.drug-item').last().find('.drug-note').val(drug.notes);
+                        		}
+                    		}
+                    	}
+                    	if (data.services) {
+                    		for (var i in data.services) {
+                        		var service = data.services[i];
+                        		var added = false;
+                        		$('.service-item').each(function() {
+                        			if (added == false && $.trim($(this).find('.service-name').val()) == '') {
+                        				$(this).find('.service-name').val(service.service_name);
+                        				$(this).find('.service-quantity').val(service.quantity);
+                        				$(this).find('.service-id').val(service.service_id);
+                        				$(this).find('.service-notes').val(service.notes);
+                        				added = true;
+                        			}
+                        		});
+                        		
+                        		if (!added) {
+                        			$(".add-column").trigger('click');
+                        			$('.drug-item').last().find('.service-name').val(drug.service_name);
+                        			$('.drug-item').last().find('.service-quantity').val(service.quantity);
+                        			$('.drug-item').last().find('.service-id').val(service.service_id);
+                        			$('.drug-item').last().find('.service-notes').val(service.notes);
                         		}
                     		}
                     	}

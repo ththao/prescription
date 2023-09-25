@@ -1,5 +1,6 @@
 <div class="btn-group">
 	<a href="/drug/index" class="btn btn-default">Danh sách thuốc</a>
+	<?php if (SERVICES == 'ON'): ?><a href="/service/index" class="btn btn-default">Kỹ thuật</a><?php endif; ?>
 	<a href="/report/daily" class="btn btn-default">Tổng kết ngày</a>
 	<a href="/report/monthly" class="btn btn-success">Tổng kết tháng</a>
 	<a href="/auth/password" class="btn btn-default">Đổi mật khẩu</a>
@@ -14,7 +15,7 @@
         <!-- Table -->
         <table class="table table-striped table-bordered" style="margin-bottom: 0px;">
             <tr>
-                <th>Tên thuốc</th>
+                <th>Tên thuốc/dịch vụ</th>
                 <th style="width: 200px;">Tháng</th>
                 <th>Số lượng</th>
                 <th>Nhập (VNĐ)</th>
@@ -46,9 +47,9 @@
     		<?php $total = 0; ?>
             <?php foreach ($data as $item) { ?>
                 <tr class="drug-item drug-item-display">
-                    <td><label class="display"><?php echo $item->drug_name; ?></label></td>
+                    <td><label class="display"><?php echo $item->name; ?></label></td>
                     <td align="center"><label class="display"><?php echo ($month < 10 ? '0' . intval($month) : $month) . '-' . $year; ?></label></td>
-                    <td align="right"><label class="display"><?php echo $item->drug_quantity; ?></label></td>
+                    <td align="right"><label class="display"><?php echo $item->quantity; ?></label></td>
                     <td align="right"><label class="display"><?php echo number_format($item->in_price, 0); ?></label></td>
                     <td align="right"><label class="display"><?php echo number_format($item->price, 0); ?></label></td>
                 </tr>
