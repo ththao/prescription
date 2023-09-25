@@ -67,8 +67,9 @@
                     <label class="display"><?php echo $item->unit ?></label>
                     <select class="form-control edit drug-unit" name="unit">
                         <option value="Viên" <?php echo $item->unit == 'Viên' ? 'selected' : '' ?>>Viên</option>
-                        <option value="Ống" <?php echo $item->unit == 'Ống' ? 'selected' : '' ?>>Ống</option>
+                        <option value="Chai" <?php echo $item->unit == 'Chai' ? 'selected' : '' ?>>Chai</option>
                         <option value="Gói" <?php echo $item->unit == 'Gói' ? 'selected' : '' ?>>Gói</option>
+                        <option value="Ống" <?php echo $item->unit == 'Ống' ? 'selected' : '' ?>>Ống</option>
                     </select>
                 </td>
                 <td>
@@ -95,8 +96,9 @@
             <td>
                 <select class="form-control edit drug-unit" name="unit">
                     <option value="Viên" selected>Viên</option>
-                    <option value="Ống">Ống</option>
+                    <option value="Chai">Chai</option>
                     <option value="Gói">Gói</option>
+                    <option value="Ống">Ống</option>
                 </select>
             </td>
             <td><input type="number" class="form-control" placeholder="Giá Nhập" name="in_price"></td>

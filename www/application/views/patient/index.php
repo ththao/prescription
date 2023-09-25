@@ -15,6 +15,7 @@
                 <?php if ($history): ?>
                     <th>Chẩn đoán</th>
                     <th>Ghi chú</th>
+                    <th></th>
                 <?php else: ?>
                     <th style="width: 81px">Năm sinh</th>
                     <th style="width: 70px">Nam/Nữ</th>
@@ -26,7 +27,7 @@
             <tr>
                 <td><input type="text" class="form-control" placeholder="Tìm ngày" name="date" id="date" value="<?php echo isset($param) && isset($param['date']) ? $param['date'] : '' ?>"></td>
                 <?php if ($history): ?>
-                	<td></td><td></td><td></td>
+                	<td></td><td></td><td></td><th></th>
                 <?php else: ?>
                     <td><input onblur="search()" type="text" class="form-control" placeholder="Tìm tên" id="patient-search" value="<?php echo isset($param) && isset($param['name']) ? $param['name'] : '' ?>" name="patient-search"></td>
                     <td></td><td></td><td></td><td></td>
@@ -40,9 +41,12 @@
                     	<td title="<?php echo $item->address; ?>"><label class="display"><?php echo $item->name ?></label></td>
                         <td title="<?php echo $item->prescription; ?>"><label class="display"><?php echo $item->diagnostic ?></label></td>
                         <td><label class="display"><?php echo $item->note ?></label></td>
+                        <td style="text-align: center; width: 100px">
+                            <a href="#" class="btn btn-success apply-prescription" diagnostic_id="<?php echo $item->diagnostic_id; ?>" title="Áp dụng lại đơn thuốc">Áp dụng</a>
+                        </td>
                     <?php else: ?>
                     	<td title="<?php echo $item->address; ?>"><label class="display"><a href="/patient/index?patient_id=<?php echo $item->id; ?>"><?php echo $item->name ?></a></label></td>
-                        <td title="<?php echo $item->prescription; ?>"><label class="display"><?php echo $item->dob ?></label></td>
+                        <td><label class="display"><?php echo $item->dob ?></label></td>
                         <td><label class="display"><?php echo $item->gender ?></label></td>
                         <td><label class="display"><?php echo $item->diagnostic ?></label></td>
                         <td style="text-align: center; width: 100px">

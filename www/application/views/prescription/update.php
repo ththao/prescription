@@ -17,8 +17,8 @@
             <td><input type="text" class="form-control dob" placeholder="Năm sinh" name="patient[dob]" value="<?php echo (isset($patient) && $patient) ? $patient->dob : ''; ?>"></td>
             <td>
                 <select class="form-control gender" name="patient[gender]">
-                    <option value="Nam" <?php echo !isset($patient) || !$patient || $patient->gender == 'Nam' ? 'selected' : ''; ?>>Nam</option>
-                    <option value="Nữ" <?php echo (isset($patient) && $patient) && $patient->gender == 'Nữ' ? 'selected' : ''; ?>>Nữ</option>
+                    <option value="Nam" <?php echo (((!isset($patient) || !$patient) && DEFAULT_GENDER == 'Nam') || ($patient && $patient->gender == 'Nam')) ? 'selected' : ''; ?>>Nam</option>
+                    <option value="Nữ" <?php echo (((!isset($patient) || !$patient) && DEFAULT_GENDER == 'Nữ') || ($patient && $patient->gender == 'Nữ')) ? 'selected' : ''; ?>>Nữ</option>
                 </select>
             </td>
         </tr>
@@ -33,7 +33,7 @@
             </td>
         </tr>
         <tr class="min-row">
-            <td colspan="3"><input type="text" class="form-control" placeholder="Ghi chú" name="diagnostic[note]" value="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->note : ''; ?>"></td>
+            <td colspan="3"><input type="text" class="form-control diagnostic-note" placeholder="Ghi chú" name="diagnostic[note]" value="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->note : ''; ?>"></td>
         </tr>
     </table>
 
@@ -45,9 +45,9 @@
     <table class="table table-striped table-bordered" id="prescription">
         <tr>
             <th>Tên thuốc</th>
-            <th style="width: 155px">Số lượng (viên/gói)</th>
+            <th style="width: 120px">Số lượng</th>
             <th style="width: 80px">Lần/ngày</th>
-            <th style="width: 128px">Viên/gói mỗi lần</th>
+            <th style="width: 90px">SL mỗi lần</th>
             <th style="width: 350px">Ghi chú</th>
         </tr>
 
@@ -56,16 +56,17 @@
             <tr class="drug-item drug-item-display min-row">
                 <td>
                 	<input type="hidden" value="<?php echo $prescription->id; ?>" name="prescription[<?php echo $i + 1; ?>][id]" />
-                    <input type="text" value="<?php echo $prescription->name; ?>" class="form-control drug-name" name="prescription[<?php echo $i + 1; ?>][drug_name]"/>
+                    <input type="text" value="<?php echo $prescription->drug_name; ?>" class="form-control drug-name" name="prescription[<?php echo $i + 1; ?>][drug_name]"/>
                 </td>
-                <td >
-                    <input type="number" min="0" value="<?php echo $prescription->quantity; ?>" class="form-control drug-quantity" name="prescription[<?php echo $i + 1; ?>][quantity]"/>
+                <td style="display: flex;">
+                    <input type="number" min="0" value="<?php echo $prescription->quantity; ?>" style="width: 70px;" class="form-control drug-quantity" name="prescription[<?php echo $i + 1; ?>][quantity]"/>
+            		<label class="drug-unit" style="padding: 5px;"><?php echo $prescription->unit; ?></label>
                 </td>
                 <td>
                 	<input type="number" min="0" value="<?php echo $prescription->time_in_day; ?>" class="form-control drug-time" name="prescription[<?php echo $i + 1; ?>][time_in_day]"/>
                 </td>
                 <td>
-                	<input type="number" min="0" class="form-control drug-unit min-row" name="prescription[<?php echo $i + 1; ?>][unit_in_time]" value="<?php echo $prescription->unit_in_time; ?>" />
+                	<input type="number" min="0" class="form-control drug-unit-in-time min-row" name="prescription[<?php echo $i + 1; ?>][unit_in_time]" value="<?php echo $prescription->unit_in_time; ?>" />
                 </td>
                 <td>
                 	<input type="text" class="form-control drug-note min-row" name="prescription[<?php echo $i + 1; ?>][notes]" value="<?php echo $prescription->notes; ?>" />
@@ -79,14 +80,15 @@
                 		<input type="hidden" value="" name="prescription[<?php echo $i; ?>][id]" />
                         <input type="text" value="" class="form-control drug-name" name="prescription[<?php echo $i; ?>][drug_name]"/>
                     </td>
-                    <td >
-                        <input type="number" min="0" value="" class="form-control drug-quantity" name="prescription[<?php echo $i; ?>][quantity]"/>
+                    <td style="display: flex;">
+                        <input type="number" min="0" value="" class="form-control drug-quantity" style="width: 70px;" name="prescription[<?php echo $i; ?>][quantity]"/>
+            			<label class="drug-unit" style="padding: 5px;"></label>
                     </td>
                     <td>
                     	<input type="number" min="0" value="1" class="form-control drug-time" name="prescription[<?php echo $i; ?>][time_in_day]"/>
                     </td>
                     <td>
-                        <input type="number" min="0" value="1" class="form-control drug-unit min-row" name="prescription[<?php echo $i; ?>][unit_in_time]" />
+                        <input type="number" min="0" value="1" class="form-control drug-unit-in-time min-row" name="prescription[<?php echo $i; ?>][unit_in_time]" />
                     </td>
                     <td>
                         <input type="text" class="form-control drug-note min-row" name="prescription[<?php echo $i; ?>][notes]" />
@@ -149,7 +151,16 @@
         $(document).on('keydown.autocomplete', ".drug-name", function() {
             $(this).autocomplete({
                 source: <?php echo $drug_names; ?>,
+                select: function (event, ui) {
+    				$(this).parents('.drug-item').find('.drug-unit').html(ui.item.unit);
+    				$('.btn-print-bill').addClass('hide');
+    				$('.btn-print-prescription').addClass('hide');
+    			}
             });
+        });
+        $(document).on("change", ".drug-name, .patient-name, .phone, .diagnostic, .diagnostic-note, .drug-item input", function() {
+			$('.btn-print-bill').addClass('hide');
+			$('.btn-print-prescription').addClass('hide');
         });
         
         var patient_names = <?php echo $patient_names; ?>;
@@ -163,6 +174,8 @@
     			$('.phone').val(ui.item.phone);
     			
     			$('.btn-view-history').attr('patient_id', ui.item.id).removeClass('hide');
+				$('.btn-print-bill').addClass('hide');
+				$('.btn-print-prescription').addClass('hide');
 			}
         });
         
@@ -177,6 +190,8 @@
     			$('.patient-name').val(ui.item.name);
     			
     			$('.btn-view-history').attr('patient_id', ui.item.id).removeClass('hide');
+				$('.btn-print-bill').addClass('hide');
+				$('.btn-print-prescription').addClass('hide');
 			}
         });
         
@@ -199,6 +214,8 @@
                             if (data.success) {
                             	$('#suggest-drugs').find('.modal-body').html(data.html);
                                 $('#suggest-drugs').modal('show');
+                				$('.btn-print-bill').addClass('hide');
+                				$('.btn-print-prescription').addClass('hide');
                             }
                         }
                     });
@@ -233,6 +250,8 @@
         	} else {
         		$('.suggested-drug-id').prop('checked', false);
         	}
+			$('.btn-print-bill').addClass('hide');
+			$('.btn-print-prescription').addClass('hide');
         });
         
         $('#suggest-drugs .btn-confirm').click(function(e) {
@@ -255,6 +274,8 @@
         			$('.drug-item').last().find('.drug-name').val(drug_name);
         		}
         	});
+			$('.btn-print-bill').addClass('hide');
+			$('.btn-print-prescription').addClass('hide');
         	$('#suggest-drugs').modal('hide');
         });
 
@@ -265,9 +286,9 @@
                 '<td>' +
                 '<span role="status" aria-live="polite" class="ui-helper-hidden-accessible"></span>' +
                 '<input type="text" value="" class="form-control drug-name ui-autocomplete-input" autocomplete="off" name="prescription['+ i +'][drug_name]"/></td>' +
-                '<td><input type="number" min="0" value="" class="form-control drug-quantity" name="prescription['+ i +'][quantity]"/></td>' +
+                '<td style="display: flex;"><input type="number" min="0" value="" style="width: 70px;" class="form-control drug-quantity" name="prescription['+ i +'][quantity]"/><label class="drug-unit" style="padding: 5px;"></label></td>' +
                 '<td><input type="number" min="0" value="1" class="form-control drug-time" name="prescription['+ i +'][time_in_day]"/></td>' +
-                '<td><input type="number" min="0" value="1" class="form-control drug-unit min-row" name="prescription['+ i +'][unit_in_time]" /></td>' +
+                '<td><input type="number" min="0" value="1" class="form-control drug-unit-in-time min-row" name="prescription['+ i +'][unit_in_time]" /></td>' +
                 '<td><input type="text" class="form-control drug-note min-row" name="prescription['+ i +'][notes]" /></td>' +
                 '</tr>';
             $("#prescription").append(html);
@@ -283,6 +304,7 @@
             if ($(selected).hasClass("disabled")) {
                 return false;
             }
+            var caption = $(selected).html();
 
             $.ajax({
                 url:"/prescription/save/" + $(selected).attr('dianostic_id'),
@@ -299,6 +321,79 @@
                         alert(data.error);
                         $(selected).html("Lưu đơn thuốc").removeClass("disabled");
                     }
+                },
+                complete: function() {
+                	$(selected).html(caption).removeClass("disabled");
+                }
+            });
+        });
+
+        $(document).on('click', '.apply-prescription', function (event) {
+            // Prevent default posting of form
+            event.preventDefault();
+
+            var selected = $(this);
+            if ($(selected).hasClass("disabled")) {
+                return false;
+            }
+            var caption = $(selected).html();
+            
+            $.ajax({
+                url:"/prescription/usePrescription",
+                data: {
+                    'diagnostic_id': $(selected).attr('diagnostic_id')
+                },
+                type: "POST",
+                dataType: 'json',
+                beforeSend: function() {
+                    $(selected).html("Xin chờ ...").addClass("disabled");
+            		$('.drug-item').each(function() {
+        				$(this).find('.drug-name').val('');
+        				$(this).find('.drug-quantity').val('');
+        				$(this).find('.drug-unit').html('');
+        				$(this).find('.drug-time').val(1);
+        				$(this).find('.drug-unit-in-time').val(1);
+        				$(this).find('.drug-note').val('');
+            		});
+    				$('.btn-print-bill').addClass('hide');
+    				$('.btn-print-prescription').addClass('hide');
+                },
+                success:function(data) {
+                    if (data.success) {
+                    	$('#view-history').modal('hide');
+                    	$('.diagnostic').val(data.diagnostic);
+                    	$('.diagnostic-note').val(data.notes);
+                    	if (data.drugs) {
+                    		for (var i in data.drugs) {
+                        		var drug = data.drugs[i];
+                        		var added = false;
+                        		$('.drug-item').each(function() {
+                        			if (added == false && $.trim($(this).find('.drug-name').val()) == '') {
+                        				$(this).find('.drug-name').val(drug.drug_name);
+                        				$(this).find('.drug-quantity').val(drug.quantity);
+                        				$(this).find('.drug-unit').html(drug.unit);
+                        				$(this).find('.drug-time').val(drug.time_in_day);
+                        				$(this).find('.drug-unit-in-time').val(drug.unit_in_time);
+                        				$(this).find('.drug-note').val(drug.notes);
+                        				added = true;
+                        			}
+                        		});
+                        		
+                        		if (!added) {
+                        			$(".add-column").trigger('click');
+                        			$('.drug-item').last().find('.drug-name').val(drug.drug_name);
+                        			$('.drug-item').last().find('.drug-quantity').val(drug.quantity);
+                        			$('.drug-item').last().find('.drug-unit').html(drug.unit);
+                        			$('.drug-item').last().find('.drug-time').val(drug.time_in_day);
+                        			$('.drug-item').last().find('.drug-unit-in-time').val(drug.unit_in_time);
+                        			$('.drug-item').last().find('.drug-note').val(drug.notes);
+                        		}
+                    		}
+                    	}
+                    }
+                },
+                complete: function() {
+                	$(selected).html(caption).removeClass("disabled");
                 }
             });
         });

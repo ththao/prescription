@@ -12,7 +12,7 @@ class Prescription_model extends MY_Model {
     
     public function getList($diagnostic_id)
     {
-        $this->db->select('*');
+        $this->db->select('prescription.*, drug.unit');
         $this->db->from('prescription');
         $this->db->join('drug', 'drug.id = drug_id', 'INNER');
         $this->db->where('diagnostic_id', $diagnostic_id);

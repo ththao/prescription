@@ -16,7 +16,12 @@ class Prescription extends My_Controller {
             $drug_names = array();
             if ($drugs) {
                 foreach ($drugs as $drug) {
-                    $drug_names[] = $drug->name;
+                    $drug_names[] = [
+                        'id' => $drug->id,
+                        'value' => $drug->name,
+                        'label' => $drug->name,
+                        'unit' => $drug->unit
+                    ];
                 }
             }
             $js_drug_names = json_encode($drug_names);
@@ -99,7 +104,7 @@ class Prescription extends My_Controller {
         $this->layout('layout/print');
         $diagnostic = $this->diagnostic_model->findOne(array('id' => $id));
         $patient = $this->patient_model->findOne(array('id' => $diagnostic->patient_id));
-        $prescription = $this->prescription_model->findAll(array('diagnostic_id' => $diagnostic->id));
+        $prescription = $this->prescription_model->getList($diagnostic->id);
 
         $this->render('prescription/print_prescription', array('patient' => $patient, 'diagnostic' => $diagnostic, 'prescription' => $prescription));
     }
@@ -110,7 +115,7 @@ class Prescription extends My_Controller {
         
         $diagnostic = $this->diagnostic_model->findOne(array('id' => $id));
         $patient = $this->patient_model->findOne(array('id' => $diagnostic->patient_id));
-        $prescription = $this->prescription_model->findAll(array('diagnostic_id' => $diagnostic->id));
+        $prescription = $this->prescription_model->getList($diagnostic->id);
 
         $this->render('prescription/bill', array('patient' => $patient, 'diagnostic' => $diagnostic, 'prescription' => $prescription));
     }
@@ -270,5 +275,24 @@ class Prescription extends My_Controller {
         }
         
         echo json_encode(array('error' => 'Chưa có dữ liệu'));
+    }
+    
+    public function usePrescription()
+    {
+        if (isset($_POST['diagnostic_id']) && $_POST['diagnostic_id']) {
+            $diagnostic = $this->diagnostic_model->findOne(array('id' => $_POST['diagnostic_id']));
+            $prescription = $this->prescription_model->getList($diagnostic->id);
+            
+            $drugs = [];
+            foreach ($prescription as $drug) {
+                $drugs[] = ['drug_name' => $drug->drug_name, 'quantity' => $drug->quantity, 'time_in_day' => $drug->time_in_day, 'unit_in_time' => $drug->unit_in_time, 'notes' => $drug->notes, 'unit' => $drug->unit];
+            }
+            
+            echo json_encode(['success' => 1, 'diagnostic' => $diagnostic->diagnostic, 'notes' => $diagnostic->notes, 'drugs' => $drugs]);
+            exit();
+        }
+        
+        echo json_encode(['success' => 0]);
+        exit();
     }
 }

@@ -40,7 +40,7 @@ class Patient extends My_Controller {
     {
         $diagnostic = $this->diagnostic_model->findOne(array('id' => $id));
         $patient = $this->patient_model->findOne(array('id' => $diagnostic->patient_id));
-        $prescription = $this->prescription_model->findAll(array('diagnostic_id' => $diagnostic->id));
+        $prescription = $this->prescription_model->getList($diagnostic->id);
 
         $this->render('patient/view', array('patient' => $patient, 'diagnostic' => $diagnostic, 'prescription' => $prescription));
     }
@@ -61,11 +61,11 @@ class Patient extends My_Controller {
             $patients = $this->patient_model->search(['patient_id' => $_POST['patient_id']], null, null);
             if ($patients) {
                 foreach ($patients as $patient) {
-                    $prescription = $this->prescription_model->findAll(array('diagnostic_id' => $patient->diagnostic_id));
+                    $prescription = $this->prescription_model->getList($patient->diagnostic_id);
                     
                     $pres_html = '';
                     foreach ($prescription as $drug) {
-                        $pres_html .= ($pres_html ? '&#013;' : '') . (' - ' . $drug->drug_name . ' (' . $drug->quantity . ' viên/gói - ngày ' . $drug->time_in_day . ' lần)');
+                        $pres_html .= ($pres_html ? '&#013;' : '') . (' - ' . $drug->drug_name . ' (' . $drug->quantity . ' ' . $drug->unit . ' - ngày ' . $drug->time_in_day . ' lần)');
                     }
                     $patient->prescription = $pres_html;
                 }
