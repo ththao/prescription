@@ -12,20 +12,24 @@ class Auth extends My_Controller
 
 	public function index()
 	{
-	    $message = '';
-	    $err_message = '';
-	    if ($_POST && isset($_POST['password'])) {
-	        $this->load->model('password_model');
-	        
-	        $password = $this->password_model->findOne();
-	        
-	        if (!$password || $password->password == md5($_POST['password'])) {
-	            redirect('/drug/index');
-	        }
-	        
-	        $err_message = 'Mật khẩu không khớp';
+	    if (ADMIN_PASSWORD == 'ON') {
+    	    $message = '';
+    	    $err_message = '';
+    	    if ($_POST && isset($_POST['password'])) {
+    	        $this->load->model('password_model');
+    	        
+    	        $password = $this->password_model->findOne();
+    	        
+    	        if (!$password || $password->password == md5($_POST['password'])) {
+    	            redirect('/drug/index');
+    	        }
+    	        
+    	        $err_message = 'Mật khẩu không khớp';
+    	    }
+            $this->render('auth/index', array('message' => $message, 'err_message' => $err_message));
+	    } else {
+	        redirect('/drug/index');
 	    }
-        $this->render('auth/index', array('message' => $message, 'err_message' => $err_message));
 	}
 	
 	public function password()

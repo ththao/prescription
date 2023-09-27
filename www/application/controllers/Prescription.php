@@ -93,7 +93,7 @@ class Prescription extends My_Controller {
                     $orders = null;
                 }
                 
-                $this->render('prescription/update', array(
+                $this->render('prescription/index', array(
                     'drug_names' => $js_drug_names,
                     'patient_names' => $js_patient_names,
                     'patient_phones' => $js_patient_phones,
@@ -110,7 +110,7 @@ class Prescription extends My_Controller {
                 } else {
                     $patient = null;
                 }
-                $this->render('prescription/update', array(
+                $this->render('prescription/index', array(
                     'patient' => $patient,
                     'drug_names' => $js_drug_names,
                     'service_names' => $js_service_names,
@@ -153,7 +153,7 @@ class Prescription extends My_Controller {
     public function suggest()
     {
         if (isset($_POST['diagnostic_template_id']) && $_POST['diagnostic_template_id']) {
-            $this->db->distinct()->select('drug.id, drug.name, diagnostic_template_prescription.most_used');
+            $this->db->distinct()->select('drug.id, drug.name, drug.unit, diagnostic_template_prescription.most_used');
             $this->db->from('diagnostic_template_prescription');
             $this->db->join('drug', 'diagnostic_template_prescription.drug_id = drug.id', 'INNER');
             $this->db->where('diagnostic_template_prescription.diagnostic_template_id', $_POST['diagnostic_template_id']);
@@ -162,7 +162,7 @@ class Prescription extends My_Controller {
             
             $drugs = $query->result();
             
-            $html = $this->load->view('prescription/drugs', ['drugs' => $drugs], true);
+            $html = $this->load->view('prescription/suggested_drugs', ['drugs' => $drugs], true);
             
             echo json_encode(['success' => 1, 'html' => $html]);
             exit();

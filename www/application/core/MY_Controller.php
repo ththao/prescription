@@ -35,7 +35,7 @@ class My_Controller extends CI_Controller
         $config['total_rows'] = $total_rows;
         $config['per_page'] = self::PER_PAGE;
         //$config["uri_segment"] = $uri_segment;
-        $config["num_links"] = 25;
+        $config["num_links"] = 10;
         $config["enable_query_strings"] = true;
         $config["reuse_query_string"] = true;
     

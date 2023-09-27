@@ -90,3 +90,4 @@ defined('DOCTOR_MOBILE')       OR define('DOCTOR_MOBILE', '0908210250');
 defined('DOCTOR_ADDR')         OR define('DOCTOR_ADDR', '51 quốc lộ 1K, Linh Xuân, Tp Thủ Đức');
 defined('DEFAULT_GENDER')      OR define('DEFAULT_GENDER', 'Nữ');
 defined('SERVICES')            OR define('SERVICES', 'ON');
+defined('ADMIN_PASSWORD')      OR define('SERVICES', 'OFF');

@@ -1,10 +1,4 @@
-<div class="btn-group">
-	<a href="/drug/index" class="btn btn-default">Danh sách thuốc</a>
-	<?php if (SERVICES == 'ON'): ?><a href="/service/index" class="btn btn-default">Kỹ thuật</a><?php endif; ?>
-	<a href="/report/daily" class="btn btn-default">Tổng kết ngày</a>
-	<a href="/report/monthly" class="btn btn-default">Tổng kết tháng</a>
-	<a href="/auth/password" class="btn btn-success">Đổi mật khẩu</a>
-</div>
+<?php $this->load->view('layout/partials/admin_menu'); ?>
 
 <div class="panel panel-default">
     <!-- Default panel contents -->

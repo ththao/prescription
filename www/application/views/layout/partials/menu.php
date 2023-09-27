@@ -12,7 +12,7 @@
             <ul class="nav navbar-nav">
                 <li <?php echo $this->router->fetch_class() == 'prescription' ? 'class="active"' : ''; ?>><a href="/prescription/index">Đơn thuốc</a></li>
                 <li <?php echo $this->router->fetch_class() == 'patient' ? 'class="active"' : ''; ?>><a href="/patient/index">Danh sách bệnh nhân</a></li>
-                <li <?php echo $this->router->fetch_class() == 'report' ? 'class="active"' : ''; ?>><a href="/auth/index">Quản lý</a></li>
+                <li <?php echo in_array($this->router->fetch_class(), ['auth', 'drug', 'service', 'report']) ? 'class="active"' : ''; ?>><a href="/auth/index">Quản lý</a></li>
                 <li <?php echo $this->router->fetch_class() == 'about' ? 'class="active"' : ''; ?>><a href="/about">Liên hệ</a></li>
             </ul>
         </div><!--/.nav-collapse -->
