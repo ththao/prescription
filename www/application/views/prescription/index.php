@@ -43,12 +43,13 @@
     <div class="btn-group">
     	<a href="#" class="btn btn-default btn-show-prescription active">Đơn Thuốc</a>
     	<a href="#" class="btn btn-default btn-show-doctor-orders">Chỉ Định</a>
+    	<a href="#" class="btn btn-default btn-show-packages">Gói</a>
     </div>
     <?php endif; ?>
     
     <?php $this->load->view('prescription/index_services'); ?>
-	
 	<?php $this->load->view('prescription/index_drugs'); ?>
+	<?php $this->load->view('prescription/index_packages'); ?>
 
     <a href="/prescription/index?patient_id=<?php echo $patient->id; ?>" class="btn btn-success pull-left add-new-prescription <?php echo (isset($patient) && $patient && isset($diagnostic) && $diagnostic) ? '' : 'hide'; ?>">Tạo đơn thuốc mới</a>
     <button type="submit" class="btn btn-success save-item pull-right" style="margin-left: 10px" dianostic_id="<?php echo (isset($diagnostic) && $diagnostic) ? $diagnostic->id : ''; ?>">Lưu đơn thuốc</button>

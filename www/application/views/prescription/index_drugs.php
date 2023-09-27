@@ -55,7 +55,7 @@
             <td><a class="remove-drug-item hide"><span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red; padding-top: 6px;"></span></a></td>
         </tr>
     </table>
-    <input type="hidden" value="<?php echo (isset($prescriptions) && $prescriptions) ? (count($prescriptions)+1) : 2; ?>" name="index_row">
+    <input type="hidden" value="<?php echo (isset($prescriptions) && $prescriptions) ? (count($prescriptions)+2) : 2; ?>" name="index_row">
 </div>
 
 <script>

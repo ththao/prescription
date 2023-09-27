@@ -21,7 +21,7 @@
                     <input type="number" min="0" value="<?php echo $order->quantity; ?>" class="form-control service-quantity" name="order[<?php echo $i + 1; ?>][quantity]"/>
                 </td>
                 <td>
-                	<input type="text" class="form-control service-notes min-row" name="service[<?php echo $i + 1; ?>][notes]" value="<?php echo $order->notes; ?>" />
+                	<input type="text" class="form-control service-notes min-row" name="order[<?php echo $i + 1; ?>][notes]" value="<?php echo $order->notes; ?>" />
                 </td>
                 <td><a class="remove-service-item"><span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red; padding-top: 6px;"></span></a></td>
             </tr>
@@ -37,12 +37,12 @@
                 <input type="number" min="0" value="1" class="form-control service-quantity" name="order[<?php echo (isset($orders) && $orders) ? (count($orders) + 1) : 1; ?>][quantity]"/>
             </td>
             <td>
-            	<input type="text" class="form-control service-notes min-row" name="service[<?php echo (isset($orders) && $orders) ? (count($orders) + 1) : 1; ?>][notes]" value="" />
+            	<input type="text" class="form-control service-notes min-row" name="order[<?php echo (isset($orders) && $orders) ? (count($orders) + 1) : 1; ?>][notes]" value="" />
             </td>
             <td><a class="remove-service-item hide"><span title="Xóa" class="glyphicon glyphicon glyphicon-remove" style="color: red; padding-top: 6px;"></span></a></td>
         </tr>
     </table>
-    <input type="hidden" value="<?php echo (isset($orders) && $orders) ? (count($orders)+1) : 2; ?>" name="service_index_row">
+    <input type="hidden" value="<?php echo (isset($orders) && $orders) ? (count($orders)+2) : 2; ?>" name="service_index_row">
 </div>
 
 <script>
@@ -82,17 +82,31 @@ $(document).ready(function() {
     
     $(document).on('click', ".btn-show-prescription", function() {
         $('.btn-show-doctor-orders').removeClass('active');
+        $('.btn-show-packages').removeClass('active');
         $(this).addClass('active');
         
         $('.doctor-orders').addClass('hide');
         $('.prescription').removeClass('hide');
+        $('.packages').addClass('hide');
     });
     
     $(document).on('click', ".btn-show-doctor-orders", function() {
         $('.btn-show-prescription').removeClass('active');
+        $('.btn-show-packages').removeClass('active');
         $(this).addClass('active');
         
         $('.doctor-orders').removeClass('hide');
+        $('.prescription').addClass('hide');
+        $('.packages').addClass('hide');
+    });
+    
+    $(document).on('click', ".btn-show-packages", function() {
+        $('.btn-show-prescription').removeClass('active');
+        $('.btn-show-doctor-orders').removeClass('active');
+        $(this).addClass('active');
+        
+        $('.packages').removeClass('hide');
+        $('.doctor-orders').addClass('hide');
         $('.prescription').addClass('hide');
     });
     

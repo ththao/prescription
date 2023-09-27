@@ -6,7 +6,7 @@ class Prescription extends My_Controller {
     {
         parent::__construct();
 
-        $this->loadModel(array('patient_model', 'drug_model', 'prescription_model', 'service_model', 'order_model', 'diagnostic_model'));
+        $this->loadModel(array('patient_model', 'drug_model', 'prescription_model', 'service_model', 'order_model', 'diagnostic_model', 'package_model', 'packageorder_model', 'packageprescription_model'));
     }
 
 	public function index()
@@ -39,8 +39,11 @@ class Prescription extends My_Controller {
                     }
                 }
                 $js_service_names = json_encode($service_names);
+                
+                $packages = $this->package_model->search("", null, null);
             } else {
                 $js_service_names = '';
+                $packages = [];
             }
             
             $query = $this->db->select('id, name, address, dob, gender, phone')->from('patient')->get();
@@ -99,6 +102,7 @@ class Prescription extends My_Controller {
                     'patient_phones' => $js_patient_phones,
                     'template_names' => $js_template_names,
                     'service_names' => $js_service_names,
+                    'packages' => $packages,
                     'patient' => $patient,
                     'diagnostic' => $diagnostic,
                     'prescriptions' => $prescriptions,
@@ -114,6 +118,7 @@ class Prescription extends My_Controller {
                     'patient' => $patient,
                     'drug_names' => $js_drug_names,
                     'service_names' => $js_service_names,
+                    'packages' => $packages,
                     'patient_names' => $js_patient_names,
                     'patient_phones' => $js_patient_phones,
                     'template_names' => $js_template_names
@@ -252,35 +257,30 @@ class Prescription extends My_Controller {
                 // Save orders of patient
                 $order_ids = [];
                 for ($i = 1; $i <= $_POST['service_index_row']; $i++) {
-                    if (!isset($_POST['order'][$i])) {
+                    if (!isset($_POST['order'][$i]) || !isset($_POST['order'][$i]['service_id']) || !$_POST['order'][$i]['service_id']) {
                         continue;
                     }
                     
-                    if ($_POST['order'][$i]['service_id']) {
-                        $service = $this->service_model->findOne(array('id' => $_POST['order'][$i]['service_id']));
-                        
-                        $pres = null;
-                        if (isset($_POST['order'][$i]['id']) && $_POST['order'][$i]['id']) {
-                            $pres = $this->order_model->findOne(array('id' => $_POST['order'][$i]['id']));
-                        }
-                        unset($_POST['order'][$i]['id']);
-                        
-                        $order['service_id'] = $_POST['order'][$i]['service_id'];
-                        $order['price'] = $service->price;
-                        $order['quantity'] = $_POST['order'][$i]['quantity'] ? $_POST['order'][$i]['quantity'] : 1;
-                        $order['notes'] = $_POST['order'][$i]['notes'];
-                        $order['diagnostic_id'] = $diagnostic_id;
-                        
-                        if ($pres) {
-                            $this->db->where('id', $pres->id)->update('orders', $order);
-                            $order_ids[] = $pres->id;
-                        } else {
-                            $order['date_created'] = date('Y-m-d H:i:s');
-                            $order_ids[] = $this->order_model->save($order);
-                        }
+                    $service = $this->service_model->findOne(array('id' => $_POST['order'][$i]['service_id']));
+                    
+                    $pres = null;
+                    if (isset($_POST['order'][$i]['id']) && $_POST['order'][$i]['id']) {
+                        $pres = $this->order_model->findOne(array('id' => $_POST['order'][$i]['id']));
+                    }
+                    unset($_POST['order'][$i]['id']);
+                    
+                    $order['service_id'] = $_POST['order'][$i]['service_id'];
+                    $order['price'] = $service->price;
+                    $order['quantity'] = $_POST['order'][$i]['quantity'] ? $_POST['order'][$i]['quantity'] : 1;
+                    $order['notes'] = $_POST['order'][$i]['notes'];
+                    $order['diagnostic_id'] = $diagnostic_id;
+                    
+                    if ($pres) {
+                        $this->db->where('id', $pres->id)->update('orders', $order);
+                        $order_ids[] = $pres->id;
                     } else {
-                        echo json_encode(array('error' => 'Kỹ thuật ' . $_POST['order'][$i]['service_name'] . ' không có trong danh sách. Vui lòng thêm vào danh sách.'));
-                        exit;
+                        $order['date_created'] = date('Y-m-d H:i:s');
+                        $order_ids[] = $this->order_model->save($order);
                     }
                 }
                 $this->db->where('id NOT IN (' . implode(',', $order_ids) . ')', null)->where('diagnostic_id', $diagnostic_id)->delete('orders');
@@ -366,6 +366,35 @@ class Prescription extends My_Controller {
             }
             
             echo json_encode(['success' => 1, 'diagnostic' => $diagnostic->diagnostic, 'notes' => $diagnostic->note, 'drugs' => $drugs, 'services' => $services]);
+            exit();
+        }
+        
+        echo json_encode(['success' => 0]);
+        exit();
+    }
+    
+    public function usePackage()
+    {
+        if (isset($_POST['package_id']) && $_POST['package_id']) {
+            $prescription = $this->packageprescription_model->getList($_POST['package_id']);
+            
+            $drugs = [];
+            foreach ($prescription as $drug) {
+                $drugs[] = ['drug_name' => $drug->drug_name, 'quantity' => $drug->quantity, 'time_in_day' => $drug->time_in_day, 'unit_in_time' => $drug->unit_in_time, 'notes' => $drug->notes, 'unit' => $drug->unit];
+            }
+            
+            $services = [];
+            if (SERVICES == 'ON') {
+                $orders = $this->packageorder_model->getList($_POST['package_id']);
+                
+                if ($orders) {
+                    foreach ($orders as $order) {
+                        $services[] = ['service_id' => $order->service_id, 'service_name' => $order->service_name, 'quantity' => $order->quantity, 'notes' => $order->notes];
+                    }
+                }
+            }
+            
+            echo json_encode(['success' => 1, 'drugs' => $drugs, 'services' => $services]);
             exit();
         }
         
