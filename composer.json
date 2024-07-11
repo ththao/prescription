@@ -1,0 +1,5 @@
+{
+    "require": {
+        "voku/portable-utf8": "^3.1"
+    }
+}
