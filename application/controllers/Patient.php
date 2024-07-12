@@ -49,7 +49,7 @@ class Patient extends My_Controller {
     {
         $diagnostic = $this->diagnostic_model->findOne(['id' => $id, 'removed' => 0, 'user_id' => $this->session->userdata('user_id')]);
         
-        $this->prescription_model->deleteAll(array('diagnostic_id' => $diagnostic->id));
+        $this->db->where('diagnostic_id', $diagnostic->id)->delete('prescription');
         $this->diagnostic_model->delete($diagnostic->id);
         
         redirect("/patient");

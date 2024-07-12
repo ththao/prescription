@@ -188,7 +188,7 @@ class Drug extends My_Controller
     {
         $drug = $this->drug_model->findOne(['id' => $id, 'user_id' => $this->session->userdata('user_id')]);
         if ($drug) {
-            $this->drug_model->delete($id);
+            $this->drug_model->update($id, ['removed' => 0, 'date_updated' => time()]);
         }
         redirect("/drug/index");
     }

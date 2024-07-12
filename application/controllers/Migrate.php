@@ -7,96 +7,246 @@ class Migrate extends My_Controller
     {
         parent::__construct();
         
-        $query = $this->db->query("SELECT name FROM sqlite_master WHERE type='table' AND name='migration'");
-        $data = $query->result();
-        if (empty($data)) {
-            $this->db->query('CREATE TABLE migration (version TEXT, apply_time INTEGER);');
-        }
-        
-        $this->load->model('Migration_model');
+        $this->loadModel(array('patient_model', 'drug_model', 'prescription_model', 'service_model', 'order_model', 'diagnostic_model', 'package_model', 'packageorder_model', 'packageprescription_model'));
     }
-
-    public function getLastestMigration()
+    
+    public function import()
     {
-        $allMigrations = $this->Migration_model->findAll();
-        if (count($allMigrations) > 0) {
-            $migrationFileName = $allMigrations[count($allMigrations) - 1]->version;
-            return explode('_', $migrationFileName)[0];
-        } else {
-            return 0;
-        }
-
-    }
-
-    public function index()
-    {
-        set_time_limit(0);
-        
-        $path            = APPPATH . 'migrations';
-        $result          = '';
-        $totalMigrations = 0;
-
-        foreach (glob($path . '/[0-9]*.sql') as $migration) {
-            $arrPath           = explode('/', $migration);
-            $migrationFileName = $arrPath[count($arrPath) - 1];
-            $migrationIndex    = explode('_', $migrationFileName)[0];
-
-            if ($migrationIndex > $this->getLastestMigration()) {
-                $totalMigrations += 1;
-                $sqlQuery = file_get_contents($migration);
-                $queries  = explode(';', $sqlQuery);
-
-                foreach ($queries as $query) {
-                    if (trim($query) != '') {
-                        try {
-                            $this->db->query($query . ';');
-                        } catch (Exception $e) {
-                            $result .= $migration . "<br>";
-                            $result .= $e->getMessage();
+        if (isset($_POST['submit']) && isset($_FILES['db_backup']) && isset($_FILES['db_backup']['tmp_name']) && $_FILES['db_backup']['tmp_name']) {
+            
+            try {
+                set_time_limit(0);
+                ini_set("memory_limit",-1);
+                
+                $this->db->trans_start();
+                
+                $handle = fopen($_FILES['db_backup']['tmp_name'], "r");
+                
+                $run = isset($_POST['run']) && $_POST['run'] ? $_POST['run'] : 'DRUGS';
+                $type = '';
+                $indexes = [];
+                
+                $backup_patients = [];
+                $backup_drugs = [];
+                $backup_diagnostics = [];
+                
+                if ($run == 'DIAGNOSTICS') {
+                    $query = $this->db->select('id, backup_id')->from('patient')->get();
+                    $data = $query->result();
+                    if ($data) {
+                        foreach ($data as $item) {
+                            $backup_ids = explode(',', $item->backup_id);
+                            if ($backup_ids) {
+                                foreach ($backup_ids as $backup_id) {
+                                    if ($backup_id) {
+                                        $backup_patients[$backup_id] = $item->id;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-
-                $this->Migration_model->save(['version' => $migrationFileName, 'apply_time' => time()]);
-            }
-        };
-        
-        $query = $this->db->select('id, name, address, dob, gender, phone')->from('patient')->get();
-        $patients = $query->result();
-        
-        if ($patients) {
-            $used_patients = [];
-            foreach ($patients as $patient) {
-                if (isset($used_patients[$patient->name])) {
-                    if (strtolower($used_patients[$patient->name]['address']) == strtolower($patient->address) || strtolower($used_patients[$patient->name]['phone']) == strtolower($patient->phone)) {
-                        $used_patients[$patient->name]['duplicated_ids'][] = $patient->id;
+                
+                if ($run == 'PRESCRIPTIONS') {
+                    $query = $this->db->select('id, backup_id')->from('drug')->get();
+                    $data = $query->result();
+                    if ($data) {
+                        foreach ($data as $item) {
+                            $backup_ids = explode(',', $item->backup_id);
+                            if ($backup_ids) {
+                                foreach ($backup_ids as $backup_id) {
+                                    if ($backup_id) {
+                                        $backup_drugs[$backup_id] = $item->id;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    $query = $this->db->select('id, backup_id')->from('diagnostic')->get();
+                    $data = $query->result();
+                    if ($data) {
+                        foreach ($data as $item) {
+                            $backup_ids = explode(',', $item->backup_id);
+                            if ($backup_ids) {
+                                foreach ($backup_ids as $backup_id) {
+                                    if ($backup_id) {
+                                        $backup_diagnostics[$backup_id] = $item->id;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                print_r($backup_diagnostics);die;
+                
+                $need_insert = [];
+                while (($data = fgetcsv($handle, null, ",")) !== FALSE) {
+                    if (count($data) == 1) {
+                        $type = $data[0];
+                        $indexes = [];
                         continue;
+                    }
+                    
+                    if (empty($indexes)) {
+                        foreach ($data as $index => $column) {
+                            $indexes[$index] = $column;
+                        }
+                        continue;
+                    }
+                    
+                    if ($run == 'DRUGS' && $type == 'DRUGS' && count($indexes) > 0) {
+                        $save = [];
+                        foreach ($indexes as $index => $column) {
+                            $save[$column] = $data[$index];
+                        }
+                        $save['date_created'] = $save['date_created'] ? strtotime($save['date_created']) : time();
+                        $save['date_updated'] = $save['date_updated'] ? strtotime($save['date_updated']) : null;
+                        $save['user_id']      = $this->session->userdata('user_id');
+                        $save['removed']      = 0;
+                        $save['backup_id']    = $save['id'] . ',';
+                        unset($save['id']);
+                        
+                        $drug = $this->drug_model->findOne(['user_id' => $this->session->userdata('user_id'), 'LOWER(name)' => strtolower($save['name'])]);
+                        if (!$drug) {
+                            $this->drug_model->save($save);
+                        } else {
+                            $save['backup_id'] = $drug->backup_id . ',' . $save['backup_id'];
+                            $this->drug_model->update($drug->id, $save);
+                        }
+                    }
+                    
+                    if ($run == 'PATIENTS' && $type == 'PATIENTS' && count($indexes) > 0) {
+                        $save = [];
+                        foreach ($indexes as $index => $column) {
+                            $save[$column] = $data[$index];
+                        }
+                        $save['date_created'] = $save['date_created'] ? strtotime($save['date_created']) : time();
+                        $save['date_updated'] = $save['date_updated'] ? strtotime($save['date_updated']) : null;
+                        $save['phone']        = filter_var($save['phone'], FILTER_SANITIZE_NUMBER_INT);
+                        $save['removed']      = 0;
+                        $save['backup_id']    = $save['id'] . ',';
+                        unset($save['id']);
+                        
+                        $query = $this->db->select('id, backup_id')->from('patient')
+                            ->where('LOWER(name) = "' . strtolower($save['name']) . '" AND LOWER(gender) = "' . strtolower($save['gender']) . '" AND (dob = "' . $save['dob'] . '" OR phone = "' . $save['phone'] . '")', null)
+                            ->get();
+                        $patient = $query->row();
+                        if (!$patient) {
+                            $this->patient_model->save($save);
+                        } else {
+                            $save['backup_id'] = $patient->backup_id . ',' . $save['backup_id'];
+                            $this->patient_model->update($patient->id, $save);
+                        }
+                    }
+                    
+                    if ($run == 'DIAGNOSTICS' && $type == 'DIAGNOSTICS' && count($indexes) > 0) {
+                        $save = [];
+                        foreach ($indexes as $index => $column) {
+                            $save[$column] = $data[$index];
+                        }
+                        $save['date_created'] = $save['date_created'] ? strtotime($save['date_created']) : time();
+                        $save['user_id']      = $this->session->userdata('user_id');
+                        $save['removed']      = 0;
+                        $save['backup_id']    = $save['id'] . ',';
+                        unset($save['id']);
+                        
+                        if (isset($backup_patients[$save['patient_id']])) {
+                            /*$query = $this->db->select('id')->from('diagnostic')
+                                ->where('user_id', $this->session->userdata('user_id'))
+                                ->where('patient_id', $patient->id)
+                                ->where('LOWER(diagnostic) = "' . strtolower($save['diagnostic']) . '"', null)
+                                ->where('DATE_FORMAT(FROM_UNIXTIME(date_created), "%Y-%m-%d") = "' . date('Y-m-d', $save['date_created']) . '"', null)
+                                ->get();
+                            $diagnostic = $query->row();*/
+                            $diagnostic = null;
+                            
+                            if (!$diagnostic) {
+                                $save['patient_id'] = $backup_patients[$save['patient_id']];
+                                $need_insert[]      = $save;
+                            }
+                        } else {
+                            print_r($save);
+                        }
+                        
+                        if (count($need_insert) >= 100) {
+                            $this->buildDiagnosticQuery($need_insert);
+                            $need_insert = [];
+                        }
+                    }
+                    
+                    if ($run == 'PRESCRIPTIONS' && $type == 'PRESCRIPTIONS' && count($indexes) > 0) {
+                        $save = [];
+                        foreach ($indexes as $index => $column) {
+                            $save[$column] = $data[$index];
+                        }
+                        $save['date_created'] = $save['date_created'] ? strtotime($save['date_created']) : time();
+                        $save['user_id']      = $this->session->userdata('user_id');
+                        $save['removed']      = 0;
+                        $save['backup_id']    = $save['id'];
+                        unset($save['id']);
+                        
+                        if (isset($backup_diagnostics[$save['diagnostic_id']]) && isset($backup_drugs[$save['drug_id']])) {
+                            //$query = $this->db->select('id')->from('prescription')->where('user_id', $this->session->userdata('user_id'))->where('diagnostic_id', $diagnostic->id)->where('drug_id', $drug->id)->get();
+                            //$prescription = $query->row();
+                            $prescription = null;
+                            
+                            if (!$prescription) {
+                                $save['diagnostic_id']   = $backup_diagnostics[$save['diagnostic_id']];
+                                $save['drug_id']         = $backup_drugs[$save['drug_id']];
+                                $need_insert[]           = $save;
+                            }
+                        } else {
+                            print_r($save);
+                        }
+                        
+                        if (count($need_insert) >= 100) {
+                            $this->buildPrescriptionQuery($need_insert);
+                            $need_insert = [];
+                        }
                     }
                 }
                 
-                $used_patients[$patient->name] = ['id' => $patient->id, 'address' => $patient->address, 'dob' => $patient->dob, 'phone' => $patient->phone, 'duplicated_ids' => []];
+                $this->db->trans_complete();
+                fclose($handle);
+            } catch (Exception $e) {
+                print_r($e);
             }
+        }
+        redirect('about');
+    }
+    
+    private function buildDiagnosticQuery($data)
+    {
+        if ($data) {
+            $sql = 'INSERT INTO diagnostic(backup_id, user_id, patient_id, diagnostic, note, date_created, date_updated, removed) VALUES ';
             
-            foreach ($used_patients as $used_patient) {
-                if ($used_patient['duplicated_ids']) {
-                    $this->db->where('patient_id IN (' . implode(',', $used_patient['duplicated_ids']) . ')', null)->update('diagnostic', ['patient_id' => $used_patient['id']]);
-                    //print_r($this->db->last_query());
-                    $this->db->where('id IN (' . implode(',', $used_patient['duplicated_ids']) . ')', null)->delete('patient');
-                    //print_r($this->db->last_query());
+            foreach ($data as $index => $item) {
+                $sql .= '("' . $item['backup_id'] . '", "' . $item['user_id'] . '", "' . $item['patient_id'] . '", "' . $item['diagnostic'] . '", "' . $item['note'] . '", "' . $item['date_created'] . '", "' . $item['date_updated'] . '", "' . $item['removed'] . '")';
+                if ($index < count($data) - 1) {
+                    $sql .= ',';
                 }
             }
+            
+            $this->db->query($sql);
         }
-        
-        $query = $this->db->select('id')->from('diagnostic_template')->get();
-        $templates = $query->result();
-        
-        foreach ($templates as $template) {
-            $this->prescription_by_diagnostic($template->id, 0);
+    }
+    
+    private function buildPrescriptionQuery($data)
+    {
+        if ($data) {
+            $sql = 'INSERT INTO prescription(backup_id, user_id, diagnostic_id, drug_id, quantity, time_in_day, unit_in_time, unit_price, drug_name, in_unit_price, notes, date_created, date_updated, removed) VALUES ';
+            
+            foreach ($data as $index => $item) {
+                $sql .= '("' . $item['backup_id'] . '", "' . $item['user_id'] . '", "' . $item['diagnostic_id'] . '", "' . $item['drug_id'] . '", "' . $item['quantity'] . '", "' . 
+                    $item['time_in_day'] . '", "' . $item['unit_in_time'] . '", "' . $item['unit_price'] . '", "' . $item['drug_name'] . '", "' . 
+                    $item['in_unit_price'] . '", "' . (isset($item['notes']) ? $item['notes'] : '') . '", "' . 
+                    (isset($item['date_created']) ? $item['date_created'] : '') . '", "' . (isset($item['date_updated']) ? $item['date_updated'] : '') . '", "' . $item['removed'] . '")';
+                if ($index < count($data) - 1) {
+                    $sql .= ',';
+                }
+            }
+            
+            $this->db->query($sql);
         }
-
-        $this->render('migrate/index', array(
-            'result'          => $result,
-            'totalMigrations' => $totalMigrations
-        ));
     }
 }
