@@ -17,7 +17,7 @@ class Drug_model extends MY_Model {
         $this->db->where('user_id', $this->session->userdata('user_id'));
         $this->db->where('removed', 0);
         $this->db->like('name', $search_param);
-        $this->db->order_by('id DESC');
+        $this->db->order_by('name ASC');
         $this->db->limit($limit, $start);
         
         $query = $this->db->get();
