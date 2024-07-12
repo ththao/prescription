@@ -130,8 +130,10 @@ class Prescription extends My_Controller {
         $diagnostic = $this->diagnostic_model->findOne(['id' => $id, 'removed' => 0, 'user_id' => $this->session->userdata('user_id')]);
         $patient = $this->patient_model->findOne(['id' => $diagnostic->patient_id, 'removed' => 0]);
         $prescription = $this->prescription_model->getList($diagnostic->id);
+        
+        $doctor = $this->user_model->findOne(['id' => $this->session->userdata('user_id')]);
 
-        $this->render('prescription/print_prescription', array('patient' => $patient, 'diagnostic' => $diagnostic, 'prescription' => $prescription));
+        $this->render('prescription/print_prescription', array('patient' => $patient, 'doctor' => $doctor, 'diagnostic' => $diagnostic, 'prescription' => $prescription));
     }
 
     public function bill($id)
