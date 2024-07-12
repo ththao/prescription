@@ -77,7 +77,6 @@ class Migrate extends My_Controller
                         }
                     }
                 }
-                print_r($backup_diagnostics);die;
                 
                 $need_insert = [];
                 while (($data = fgetcsv($handle, null, ",")) !== FALSE) {
