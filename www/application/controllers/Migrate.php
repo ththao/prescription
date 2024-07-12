@@ -99,4 +99,95 @@ class Migrate extends My_Controller
             'totalMigrations' => $totalMigrations
         ));
     }
+    
+    public function export()
+    {
+        $type = 'PRESCRIPTIONS';
+        
+        $this->loadModel(array('patient_model', 'drug_model', 'prescription_model', 'diagnostic_model'));
+        $drugs = $this->drug_model->findAll();
+        $patients = $this->patient_model->findAll();
+        $diagnostics = $this->diagnostic_model->findAll();
+        $prescriptions = $this->prescription_model->findAll();
+        $data = [];
+        if ($type == 'DRUGS' && $drugs) {
+            $data[] = ['DRUGS'];
+            $data[] = ['id', 'name', 'unit', 'price', 'note', 'date_created', 'date_updated', 'in_price'];
+            foreach ($drugs as $drug) {
+                $data[] = [$drug->id, $drug->name, $drug->unit, $drug->price, $drug->note, $drug->date_created, $drug->date_updated, $drug->in_price];
+            }
+            $this->array_to_csv_download($data, 'drugs.csv', ',');
+            exit();
+        }
+        if ($type == 'PATIENTS' && $patients) {
+            $data[] = ['PATIENTS'];
+            $data[] = ['id', 'name', 'dob', 'gender', 'phone', 'address', 'note', 'date_created', 'date_updated'];
+            foreach ($patients as $item) {
+                $data[] = [$item->id, $item->name, $item->dob, $item->gender, $item->phone, $item->address, $item->note, $item->date_created, $item->date_updated];
+            }
+            $this->array_to_csv_download($data, 'patients.csv', ',');
+            exit();
+        }
+        if ($type == 'DIAGNOSTICS' && $diagnostics) {
+            $data[] = ['DIAGNOSTICS'];
+            $data[] = ['id', 'patient_id', 'diagnostic', 'note', 'date_created'];
+            foreach ($diagnostics as $item) {
+                $data[] = [$item->id, $item->patient_id, $item->diagnostic, $item->note, $item->date_created];
+            }
+            $this->array_to_csv_download($data, 'diagnostics.csv', ',');
+            exit();
+        }
+        if ($type == 'PRESCRIPTIONS' && $prescriptions) {
+            $data[] = ['PRESCRIPTIONS'];
+            $data[] = ['id', 'diagnostic_id', 'drug_id', 'quantity', 'time_in_day', 'unit_in_time', 'date_created', 'unit_price', 'drug_name', 'in_unit_price'];
+            foreach ($prescriptions as $item) {
+                $data[] = [$item->id, $item->diagnostic_id, $item->drug_id, $item->quantity, $item->time_in_day, $item->unit_in_time, $item->date_created, $item->unit_price, $item->drug_name, $item->in_unit_price];
+            }
+            $this->array_to_csv_download($data, 'prescriptions.csv', ',');
+            exit();
+        }
+    }
+    
+    private function arrayToCsv(array &$fields, $delimiter = ',', $enclosure = '"', $encloseAll = false, $nullToMysqlNull = false )
+    {
+        $delimiter_esc = preg_quote($delimiter, '/');
+        $enclosure_esc = preg_quote($enclosure, '/');
+        
+        $output = array();
+        foreach ( $fields as $field ) {
+            if ($field === null && $nullToMysqlNull) {
+                $output[] = 'NULL';
+                continue;
+            }
+            
+            // Enclose fields containing $delimiter, $enclosure or whitespace
+            if ( $encloseAll || preg_match( "/(?:${delimiter_esc}|${enclosure_esc}|\s)/", $field ) ) {
+                $output[] = $enclosure . str_replace($enclosure, $enclosure . $enclosure, $field) . $enclosure;
+            }
+            else {
+                $output[] = $field;
+            }
+        }
+        
+        return implode( $delimiter, $output );
+    }
+    
+    private function array_to_csv_download($array, $filename = "export.csv", $delimiter=",") {
+        ob_start();
+        header('Content-Type: application/csv');
+        header('Content-Disposition: attachment; filename="'.$filename.'";');
+        
+        // open the "output" stream
+        $f = fopen('php://output', 'w');
+        foreach ($array as $line) {
+            $l = $this->arrayToCsv($line, $delimiter, '"', true, false);
+            
+            fwrite($f, $l.PHP_EOL);
+        }
+        //to get content length for download progress on frontend
+        register_shutdown_function(function() {
+            header('Content-Length: ' . ob_get_length());
+            ob_end_flush();
+        });
+    }
 }
