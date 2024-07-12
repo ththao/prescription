@@ -9,6 +9,8 @@
             	<option value="PATIENTS">PATIENTS</option>
             	<option value="DIAGNOSTICS">DIAGNOSTICS</option>
             	<option value="PRESCRIPTIONS">PRESCRIPTIONS</option>
+            	<option value="SERVICES">SERVICES</option>
+            	<option value="ORDERS">ORDERS</option>
             </select>
         	<button type="submit" name="submit">Import</button>
         </form>

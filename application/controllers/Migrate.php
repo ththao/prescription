@@ -29,6 +29,7 @@ class Migrate extends My_Controller
                 $backup_patients = [];
                 $backup_drugs = [];
                 $backup_diagnostics = [];
+                $backup_services = [];
                 
                 if ($run == 'DIAGNOSTICS') {
                     $query = $this->db->select('id, backup_id')->from('patient')->get();
@@ -47,6 +48,41 @@ class Migrate extends My_Controller
                     }
                 }
                 
+                if ($run == 'ORDERS') {
+                    $query = $this->db->select('id, backup_id')->from('services')->get();
+                    $data = $query->result();
+                    if ($data) {
+                        foreach ($data as $item) {
+                            $backup_ids = explode(',', $item->backup_id);
+                            if ($backup_ids) {
+                                foreach ($backup_ids as $backup_id) {
+                                    if ($backup_id) {
+                                        $backup_services[$backup_id] = $item->id;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                
+                if ($run == 'PRESCRIPTIONS' || $run == 'ORDERS') {
+                    $query = $this->db->select('id, backup_id')->from('diagnostic')->get();
+                    $data = $query->result();
+                    if ($data) {
+                        foreach ($data as $item) {
+                            $backup_ids = explode(',', $item->backup_id);
+                            if ($backup_ids) {
+                                foreach ($backup_ids as $backup_id) {
+                                    if ($backup_id) {
+                                        $backup_diagnostics[$backup_id] = $item->id;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 if ($run == 'PRESCRIPTIONS') {
                     $query = $this->db->select('id, backup_id')->from('drug')->get();
                     $data = $query->result();
@@ -57,20 +93,6 @@ class Migrate extends My_Controller
                                 foreach ($backup_ids as $backup_id) {
                                     if ($backup_id) {
                                         $backup_drugs[$backup_id] = $item->id;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    $query = $this->db->select('id, backup_id')->from('diagnostic')->get();
-                    $data = $query->result();
-                    if ($data) {
-                        foreach ($data as $item) {
-                            $backup_ids = explode(',', $item->backup_id);
-                            if ($backup_ids) {
-                                foreach ($backup_ids as $backup_id) {
-                                    if ($backup_id) {
-                                        $backup_diagnostics[$backup_id] = $item->id;
                                     }
                                 }
                             }
@@ -111,6 +133,27 @@ class Migrate extends My_Controller
                         } else {
                             $save['backup_id'] = $drug->backup_id . ',' . $save['backup_id'];
                             $this->drug_model->update($drug->id, $save);
+                        }
+                    }
+                    
+                    if ($run == 'SERVICES' && $type == 'SERVICES' && count($indexes) > 0) {
+                        $save = [];
+                        foreach ($indexes as $index => $column) {
+                            $save[$column] = $data[$index];
+                        }
+                        $save['date_created'] = $save['date_created'] ? strtotime($save['date_created']) : time();
+                        $save['date_updated'] = isset($save['date_updated']) && $save['date_updated'] ? strtotime($save['date_updated']) : null;
+                        $save['user_id']      = $this->session->userdata('user_id');
+                        $save['removed']      = 0;
+                        $save['backup_id']    = $save['id'] . ',';
+                        unset($save['id']);
+                        
+                        $service = $this->service_model->findOne(['user_id' => $this->session->userdata('user_id'), 'LOWER(service_name)' => strtolower($save['service_name'])]);
+                        if (!$service) {
+                            $this->service_model->save($save);
+                        } else {
+                            $save['backup_id'] = $service->backup_id . ',' . $save['backup_id'];
+                            $this->service_model->update($service->id, $save);
                         }
                     }
                     
@@ -164,7 +207,7 @@ class Migrate extends My_Controller
                                 $need_insert[]      = $save;
                             }
                         } else {
-                            print_r($save);
+                            //print_r($save);
                         }
                         
                         if (count($need_insert) >= 100) {
@@ -179,6 +222,7 @@ class Migrate extends My_Controller
                             $save[$column] = $data[$index];
                         }
                         $save['date_created'] = $save['date_created'] ? strtotime($save['date_created']) : time();
+                        $save['date_updated'] = isset($save['date_updated']) && $save['date_updated'] ? strtotime($save['date_updated']) : null;
                         $save['user_id']      = $this->session->userdata('user_id');
                         $save['removed']      = 0;
                         $save['backup_id']    = $save['id'];
@@ -195,13 +239,54 @@ class Migrate extends My_Controller
                                 $need_insert[]           = $save;
                             }
                         } else {
-                            print_r($save);
+                            //print_r($save);
                         }
                         
                         if (count($need_insert) >= 100) {
                             $this->buildPrescriptionQuery($need_insert);
                             $need_insert = [];
                         }
+                    }
+                    
+                    if ($run == 'ORDERS' && $type == 'ORDERS' && count($indexes) > 0) {
+                        $save = [];
+                        foreach ($indexes as $index => $column) {
+                            $save[$column] = $data[$index];
+                        }
+                        $save['date_created'] = $save['date_created'] ? strtotime($save['date_created']) : time();
+                        $save['date_updated'] = isset($save['date_updated']) && $save['date_updated'] ? strtotime($save['date_updated']) : null;
+                        $save['user_id']      = $this->session->userdata('user_id');
+                        $save['removed']      = 0;
+                        $save['backup_id']    = $save['id'];
+                        unset($save['id']);
+                        
+                        if (isset($backup_diagnostics[$save['diagnostic_id']]) && isset($backup_services[$save['service_id']])) {
+                            $save['diagnostic_id']   = $backup_diagnostics[$save['diagnostic_id']];
+                            $save['service_id']      = $backup_services[$save['service_id']];
+                            $need_insert[]           = $save;
+                        } else {
+                            //print_r($save);
+                        }
+                        
+                        if (count($need_insert) >= 100) {
+                            $this->buildOrderQuery($need_insert);
+                            $need_insert = [];
+                        }
+                    }
+                }
+                
+                if ($need_insert) {
+                    if ($run == 'PRESCRIPTIONS') {
+                        $this->buildPrescriptionQuery($need_insert);
+                        $need_insert = [];
+                    }
+                    if ($run == 'ORDERS') {
+                        $this->buildOrderQuery($need_insert);
+                        $need_insert = [];
+                    }
+                    if ($run == 'DIAGNOSTICS') {
+                        $this->buildDiagnosticQuery($need_insert);
+                        $need_insert = [];
                     }
                 }
                 
@@ -212,6 +297,23 @@ class Migrate extends My_Controller
             }
         }
         redirect('about');
+    }
+    
+    private function buildOrderQuery($data)
+    {
+        if ($data) {
+            $sql = 'INSERT INTO orders(backup_id, user_id, diagnostic_id, service_id, quantity, notes, price, date_created, date_updated, removed) VALUES ';
+            
+            foreach ($data as $index => $item) {
+                $sql .= '("' . $item['backup_id'] . '", "' . $item['user_id'] . '", "' . $item['diagnostic_id'] . '", "' . $item['service_id'] . '", "' . $item['quantity'] . '", "' . 
+                    $item['notes'] . '", "' . $item['price'] . '", "' . $item['date_created'] . '", "' . $item['date_updated'] . '", "' . $item['removed'] . '")';
+                if ($index < count($data) - 1) {
+                    $sql .= ',';
+                }
+            }
+            
+            $this->db->query($sql);
+        }
     }
     
     private function buildDiagnosticQuery($data)
