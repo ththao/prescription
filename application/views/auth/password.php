@@ -1,18 +1,8 @@
-<div id="header">
-    <?php $this->load->view('layout/partials/menu');?>
-    
-    <div class="row header-title page-name" align="center">
-        <a class="btn btn-default btn-back pull-left top15" href="/auth/manage">
-            <span><img src="../../../../images/back.png"> Quay Lại</span>
-        </a>
-    </div>
-</div>
+<?php $this->load->view('layout/partials/admin_menu'); ?>
 
-<div style="clear: both;"></div>
-
-<div id="content">
-	<div class="col-md-3"></div>
-    <div class="col-md-6 password-box">
+<!-- Main component for a primary marketing message or call to action -->
+<div class="panel panel-default">
+    <div class="password-box" style="padding: 20px;">
     	<h2 align="center">MẬT KHẨU</h2>
     	<form method="post">
             <?php if ($message) { ?>

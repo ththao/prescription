@@ -90,4 +90,4 @@ defined('DOCTOR_MOBILE')       OR define('DOCTOR_MOBILE', '0828868779');
 defined('DOCTOR_ADDR')         OR define('DOCTOR_ADDR', '119 Đường D2, Phường Tăng Nhơn Phú A, Tp Thủ Đức, Tp Hồ Chí Minh');
 defined('DEFAULT_GENDER')      OR define('DEFAULT_GENDER', 'Nam');
 defined('SERVICES')            OR define('SERVICES', 'ON');
-defined('ADMIN_PASSWORD')      OR define('ADMIN_PASSWORD', 'OFF');
+defined('ADMIN_PASSWORD')      OR define('ADMIN_PASSWORD', 'ON');

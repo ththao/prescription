@@ -105,6 +105,23 @@ class Auth extends My_Controller
         $this->render('auth/admin', array('message' => $message, 'err_message' => $err_message));
 	}
 	
+	public function profile()
+	{
+	    if (!$this->checkLoggedIn()) {
+	        redirect('/auth/login');
+	    }
+	    
+	    $user = $this->user_model->findOne(['id' => $this->session->userdata['user_id']]);
+	    
+	    $message = '';
+	    if (!empty($_POST)) {
+	        $this->user_model->update($user->id, $_POST);
+	        $message = 'Đã lưu thiết lập thành công.';
+	    }
+	    
+	    $this->render('auth/profile', ['user' => $user, 'message' => $message, 'err_message' => '']);
+	}
+	
 	public function password()
 	{
 	    if (!$this->checkLoggedIn()) {

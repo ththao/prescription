@@ -6,5 +6,9 @@
 	<?php endif; ?>
 	<a href="/report/daily" class="btn <?php echo ($this->router->fetch_class() == 'report' && $this->router->fetch_method() == 'daily') ? 'btn-success' : 'btn-default'; ?>">Báo cáo ngày</a>
 	<a href="/report/monthly" class="btn <?php echo ($this->router->fetch_class() == 'report' && $this->router->fetch_method() == 'monthly') ? 'btn-success' : 'btn-default'; ?>">Báo cáo tháng</a>
-	<?php if (ADMIN_PASSWORD == 'ON'): ?><a href="/auth/password" class="btn <?php echo ($this->router->fetch_class() == 'auth' && $this->router->fetch_method() == 'password') ? 'btn-success' : 'btn-default'; ?>">Đổi mật khẩu</a><?php endif; ?>
+	<a href="/auth/profile" class="btn <?php echo ($this->router->fetch_class() == 'auth' && $this->router->fetch_method() == 'profile') ? 'btn-success' : 'btn-default'; ?>">Thiết lập</a>
+	<?php if (ADMIN_PASSWORD == 'ON'): ?>
+		<a href="/auth/password" class="btn <?php echo ($this->router->fetch_class() == 'auth' && $this->router->fetch_method() == 'password') ? 'btn-success' : 'btn-default'; ?>">Đổi mật khẩu</a>
+		<a href="/auth/admin_password" class="btn <?php echo ($this->router->fetch_class() == 'auth' && $this->router->fetch_method() == 'admin_password') ? 'btn-success' : 'btn-default'; ?>">Đổi mật khẩu quản lý</a>
+	<?php endif; ?>
 </div>
