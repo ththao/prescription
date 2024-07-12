@@ -102,49 +102,87 @@ class Migrate extends My_Controller
     
     public function export()
     {
-        $type = 'PRESCRIPTIONS';
+        $type = 'DRUGS';
         
-        $this->loadModel(array('patient_model', 'drug_model', 'prescription_model', 'diagnostic_model'));
-        $drugs = $this->drug_model->findAll();
-        $patients = $this->patient_model->findAll();
-        $diagnostics = $this->diagnostic_model->findAll();
-        $prescriptions = $this->prescription_model->findAll();
+        
         $data = [];
-        if ($type == 'DRUGS' && $drugs) {
-            $data[] = ['DRUGS'];
-            $data[] = ['id', 'name', 'unit', 'price', 'note', 'date_created', 'date_updated', 'in_price'];
-            foreach ($drugs as $drug) {
-                $data[] = [$drug->id, $drug->name, $drug->unit, $drug->price, $drug->note, $drug->date_created, $drug->date_updated, $drug->in_price];
+        if ($type == 'DRUGS') {
+            $this->loadModel(['drug_model']);
+            $drugs = $this->drug_model->findAll();
+            if ($drugs) {
+                $data[] = ['DRUGS'];
+                $data[] = ['id', 'name', 'unit', 'price', 'note', 'date_created', 'date_updated', 'in_price'];
+                foreach ($drugs as $drug) {
+                    $data[] = [$drug->id, $drug->name, $drug->unit, $drug->price, $drug->note, $drug->date_created, $drug->date_updated, $drug->in_price];
+                }
+                $this->array_to_csv_download($data, 'drugs.csv', ',');
+                exit();
             }
-            $this->array_to_csv_download($data, 'drugs.csv', ',');
-            exit();
         }
-        if ($type == 'PATIENTS' && $patients) {
-            $data[] = ['PATIENTS'];
-            $data[] = ['id', 'name', 'dob', 'gender', 'phone', 'address', 'note', 'date_created', 'date_updated'];
-            foreach ($patients as $item) {
-                $data[] = [$item->id, $item->name, $item->dob, $item->gender, $item->phone, $item->address, $item->note, $item->date_created, $item->date_updated];
+        if ($type == 'PATIENTS') {
+            $this->loadModel(['patient_model']);
+            $patients = $this->patient_model->findAll();
+            if ($patients) {
+                $data[] = ['PATIENTS'];
+                $data[] = ['id', 'name', 'dob', 'gender', 'phone', 'address', 'note', 'date_created', 'date_updated'];
+                foreach ($patients as $item) {
+                    $data[] = [$item->id, $item->name, $item->dob, $item->gender, $item->phone, $item->address, $item->note, $item->date_created, $item->date_updated];
+                }
+                $this->array_to_csv_download($data, 'patients.csv', ',');
+                exit();
             }
-            $this->array_to_csv_download($data, 'patients.csv', ',');
-            exit();
         }
-        if ($type == 'DIAGNOSTICS' && $diagnostics) {
-            $data[] = ['DIAGNOSTICS'];
-            $data[] = ['id', 'patient_id', 'diagnostic', 'note', 'date_created'];
-            foreach ($diagnostics as $item) {
-                $data[] = [$item->id, $item->patient_id, $item->diagnostic, $item->note, $item->date_created];
+        if ($type == 'DIAGNOSTICS') {
+            $this->loadModel(['diagnostic_model']);
+            $diagnostics = $this->diagnostic_model->findAll();
+                if ($diagnostics) {
+                $data[] = ['DIAGNOSTICS'];
+                $data[] = ['id', 'patient_id', 'diagnostic', 'note', 'date_created'];
+                foreach ($diagnostics as $item) {
+                    $data[] = [$item->id, $item->patient_id, $item->diagnostic, $item->note, $item->date_created];
+                }
+                $this->array_to_csv_download($data, 'diagnostics.csv', ',');
+                exit();
             }
-            $this->array_to_csv_download($data, 'diagnostics.csv', ',');
-            exit();
         }
-        if ($type == 'PRESCRIPTIONS' && $prescriptions) {
-            $data[] = ['PRESCRIPTIONS'];
-            $data[] = ['id', 'diagnostic_id', 'drug_id', 'quantity', 'time_in_day', 'unit_in_time', 'date_created', 'unit_price', 'drug_name', 'in_unit_price'];
-            foreach ($prescriptions as $item) {
-                $data[] = [$item->id, $item->diagnostic_id, $item->drug_id, $item->quantity, $item->time_in_day, $item->unit_in_time, $item->date_created, $item->unit_price, $item->drug_name, $item->in_unit_price];
+        if ($type == 'PRESCRIPTIONS') {
+            $this->loadModel(['prescription_model']);
+            $prescriptions = $this->prescription_model->findAll();
+            if ($prescriptions) {
+                $data[] = ['PRESCRIPTIONS'];
+                $data[] = ['id', 'diagnostic_id', 'drug_id', 'quantity', 'time_in_day', 'unit_in_time', 'date_created', 'unit_price', 'drug_name', 'in_unit_price'];
+                foreach ($prescriptions as $item) {
+                    $data[] = [$item->id, $item->diagnostic_id, $item->drug_id, $item->quantity, $item->time_in_day, $item->unit_in_time, $item->date_created, $item->unit_price, $item->drug_name, $item->in_unit_price];
+                }
+                $this->array_to_csv_download($data, 'prescriptions.csv', ',');
+                exit();
             }
-            $this->array_to_csv_download($data, 'prescriptions.csv', ',');
-            exit();
+        }
+        if ($type == 'SERVICES') {
+            $query = $this->db->select('*')->from('services')->order_by('id', 'ASC')->get();
+            $data = $query->result();
+            if ($data) {
+                $data[] = ['SERVICES'];
+                $data[] = ['id', 'service_name', 'notes', 'price', 'date_created', 'date_updated'];
+                foreach ($data as $item) {
+                    $data[] = [$item->id, $item->service_name, $item->notes, $item->price, $item->date_created, $item->date_updated];
+                }
+                $this->array_to_csv_download($data, 'services.csv', ',');
+                exit();
+            }
+        }
+        if ($type == 'ORDERS') {
+            $query = $this->db->select('*')->from('orders')->order_by('id', 'ASC')->get();
+            $data = $query->result();
+            if ($data) {
+                $data[] = ['ORDERS'];
+                $data[] = ['id', 'diagnostic_id', 'service_id', 'price', 'date_created', 'notes', 'quantity'];
+                foreach ($data as $item) {
+                    $data[] = [$item->id, $item->diagnostic_id, $item->service_id, $item->price, $item->date_created, $item->notes, $item->quantity];
+                }
+                $this->array_to_csv_download($data, 'orders.csv', ',');
+                exit();
+            }
         }
     }
     
