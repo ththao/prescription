@@ -69,7 +69,7 @@
         <?php } ?>
 		<tr><td colspan="5"></td></tr>
         <tr class="service-item-new">
-            <td><input type="text" class="form-control" placeholder="Kỹ Thuật" name="service_name"></td>
+            <td><input type="text" class="form-control add-service-name" placeholder="Kỹ Thuật" name="service_name"></td>
             <td><input type="number" class="form-control" placeholder="Đơn Giá" name="price"></td>
             <td><input type="text" class="form-control" placeholder="Ghi chú" name="notes"></td>
             <td style="text-align: center"><input type="submit" class="btn btn-success" id="add_service" value="Thêm"></td>
@@ -79,6 +79,18 @@
 
 <script>
     $(document).ready(function() {
+        $(document).on('keydown.autocomplete', ".service-search", function() {
+            $(this).autocomplete({
+                source: <?php echo $my_service_names; ?>
+            });
+        });
+        
+        $(document).on('keydown.autocomplete', ".add-service-name", function() {
+            $(this).autocomplete({
+                source: <?php echo $service_names; ?>
+            });
+        });
+        
     	$('.service-item-save').click(function (event) {
             if ($('#service_row').length) {
                 // Prevent default posting of form

@@ -43,7 +43,7 @@
     <div class="btn-group">
     	<a href="#" class="btn btn-default btn-show-prescription active">Đơn thuốc</a>
     	<a href="#" class="btn btn-default btn-show-doctor-orders">Chỉ định</a>
-    	<a href="#" class="btn btn-default btn-show-packages">Gói</a>
+    	<a href="#" class="btn btn-default btn-show-packages hide">Gói</a>
     </div>
     <?php endif; ?>
     

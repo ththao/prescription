@@ -29,7 +29,7 @@ class Patient_model extends MY_Model {
             }
         }
         if (isset($search_param['date']) && $search_param['date']) {
-            $this->db->where('STRFTIME("%d-%m-%Y", diagnostic.date_created) = ', $search_param['date']);
+            $this->db->where('DATE_FORMAT(FROM_UNIXTIME(diagnostic.date_created), "%d-%m-%Y") = ', $search_param['date']);
         }
         $this->db->order_by('diagnostic.date_created DESC');
         if ($limit) {
@@ -56,7 +56,7 @@ class Patient_model extends MY_Model {
             }
         }
         if (isset($search_param['date']) && $search_param['date']) {
-            $this->db->where('STRFTIME("%d-%m-%Y", diagnostic.date_created) = ', $search_param['date']);
+            $this->db->where('DATE_FORMAT(FROM_UNIXTIME(diagnostic.date_created), "%d-%m-%Y") = ', $search_param['date']);
         }
         
         $query = $this->db->get();

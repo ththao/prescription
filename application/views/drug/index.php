@@ -92,7 +92,7 @@
         <?php } ?>
 		<tr><td colspan="5"></td></tr>
         <tr class="drug-item-new">
-            <td><input type="text" class="form-control" placeholder="Tên thuốc" name="name"></td>
+            <td><input type="text" class="form-control add-drug-name" placeholder="Tên thuốc" name="name"></td>
             <td>
                 <select class="form-control edit drug-unit" name="unit">
                     <option value="Viên" selected>Viên</option>
@@ -111,6 +111,18 @@
 
 <script>
     $(document).ready(function() {
+        $(document).on('keydown.autocomplete', ".drug-search", function() {
+            $(this).autocomplete({
+                source: <?php echo $my_drug_names; ?>
+            });
+        });
+        
+        $(document).on('keydown.autocomplete', ".add-drug-name", function() {
+            $(this).autocomplete({
+                source: <?php echo $drug_names; ?>
+            });
+        });
+        
     	$('.drug-item-save').click(function (event) {
             if ($('#drug_row').length) {
                 // Prevent default posting of form

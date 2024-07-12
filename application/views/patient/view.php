@@ -2,7 +2,7 @@
 
 <h2 style="text-align: center">Đơn thuốc</h2>
 
-<div>Ngày: <?php echo date("d/m/Y", strtotime($diagnostic->date_created)); ?>
+<div>Ngày: <?php echo date("d/m/Y", $diagnostic->date_created); ?>
     <span style="margin-left: 50px">Chẩn đoán: <?php echo $diagnostic->diagnostic; ?></span>
 </div>
 <br>

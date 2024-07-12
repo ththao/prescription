@@ -22,8 +22,27 @@ class Service extends My_Controller
         $data['services'] = $this->service_model->search("", $config["per_page"], $data['page']);
 
         $data['pagination'] = $this->pagination->create_links();
+        
+        $query = $this->db->select('services.service_name')->from('services')->where('user_id <> ' . $this->session->userdata('user_id'), null)->where('removed', 0)->get();
+        $services = $query->result();
+        $service_names = [];
+        if ($services) {
+            foreach ($services as $service) {
+                $service_names[] = ['value' => $service->service_name, 'label' => $service->service_name];
+            }
+        }
+        $js_service_names = json_encode($service_names);
+        
+        $my_services = $this->service_model->findAll(['user_id' => $this->session->userdata('user_id'), 'removed' => 0]);
+        $my_service_names = [];
+        if ($my_services) {
+            foreach ($my_services as $service) {
+                $my_service_names[] = ['value' => $service->service_name, 'label' => $service->service_name];
+            }
+        }
+        $js_my_service_names = json_encode($my_service_names);
 
-        $this->render('service/index', array('models' => $data, 'search' => ''));
+        $this->render('service/index', array('models' => $data, 'service_names' => $js_service_names, 'my_service_names' => $js_my_service_names, 'search' => ''));
 	}
 
     public function search()

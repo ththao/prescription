@@ -22,8 +22,27 @@ class Drug extends My_Controller
         $data['drugs'] = $this->drug_model->search("", $config["per_page"], $data['page']);
 
         $data['pagination'] = $this->pagination->create_links();
+        
+        $query = $this->db->select('drug.name')->from('drug')->where('user_id <> ' . $this->session->userdata('user_id'), null)->where('removed', 0)->get();
+        $drugs = $query->result();
+        $drug_names = [];
+        if ($drugs) {
+            foreach ($drugs as $drug) {
+                $drug_names[] = ['value' => $drug->name, 'label' => $drug->name];
+            }
+        }
+        $js_drug_names = json_encode($drug_names);
+        
+        $my_drugs = $this->drug_model->findAll(['user_id' => $this->session->userdata('user_id'), 'removed' => 0]);
+        $my_drug_names = [];
+        if ($my_drugs) {
+            foreach ($my_drugs as $drug) {
+                $my_drug_names[] = ['value' => $drug->name, 'label' => $drug->name];
+            }
+        }
+        $js_my_drug_names = json_encode($my_drug_names);
 
-        $this->render('drug/index', array('models' => $data, 'search' => ''));
+        $this->render('drug/index', ['drug_names' => $js_drug_names, 'my_drug_names' => $js_my_drug_names, 'models' => $data, 'search' => '']);
 	}
 	
 	public function import()

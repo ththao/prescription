@@ -36,7 +36,7 @@
 
             <?php foreach ($models['patients'] as $item) { ?>
                 <tr class="patient-item patient-item-display">
-                    <td><?php echo date("d-m-Y", strtotime($item->date_created)); ?></td>
+                    <td><?php echo date("d-m-Y", $item->date_created); ?></td>
                     <?php if ($history): ?>
                     	<td title="<?php echo $item->address; ?>"><label class="display"><?php echo $item->name ?></label></td>
                         <td title="<?php echo $item->prescription; ?>"><label class="display"><?php echo $item->diagnostic ?></label></td>

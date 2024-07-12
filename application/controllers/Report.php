@@ -41,8 +41,8 @@ class Report extends My_Controller
 	        $where2 .= ' WHERE services.service_name LIKE "%' . $search_name . '%"';
 	    }
 	    if ($date) {
-	        $where1 .= ($where1 ? ' AND' : ' WHERE') . ' prescription.date_created LIKE "%' . $date . '%"';
-	        $where2 .= ($where2 ? ' AND' : ' WHERE') . ' orders.date_created LIKE "%' . $date . '%"';
+	        $where1 .= ($where1 ? ' AND' : ' WHERE') . ' DATE_FORMAT(FROM_UNIXTIME(prescription.date_created), "%Y-%m-%d") LIKE "%' . $date . '%"';
+	        $where2 .= ($where2 ? ' AND' : ' WHERE') . ' DATE_FORMAT(FROM_UNIXTIME(orders.date_created), "%Y-%m-%d") LIKE "%' . $date . '%"';
 	    }
 	    
 	    if (SERVICES == 'ON') {
@@ -67,7 +67,6 @@ class Report extends My_Controller
                 ORDER BY LOWER(prescription.drug_name)
             ';
 	    }
-	    
 	    $query = $this->db->query($sql);
 	    return $query->result();
 	}
