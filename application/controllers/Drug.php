@@ -47,26 +47,55 @@ class Drug extends My_Controller
 	
 	public function import()
 	{
-	    if (isset($_POST['submit'])) {
+	    if (isset($_POST['submit']) && isset($_FILES['drugs']) && isset($_FILES['drugs']['tmp_name']) && $_FILES['drugs']['tmp_name']) {
             $handle = fopen($_FILES['drugs']['tmp_name'], "r");
             $headers = fgetcsv($handle, null, ",");
+            
+            $name_index = 1;
+            $unit_index = 2;
+            $price_index = 3;
+            $note_index = 4;
+            $in_price_index = 7;
+            
+            foreach ($headers as $index => $header) {
+                if (strtolower($header) == 'name') {
+                    $name_index = $index;
+                }
+                if (strtolower($header) == 'unit') {
+                    $unit_index = $index;
+                }
+                if (strtolower($header) == 'price') {
+                    $price_index = $index;
+                }
+                if (strtolower($header) == 'in_price') {
+                    $in_price_index = $index;
+                }
+                if (strtolower($header) == 'note') {
+                    $note_index = $index;
+                }
+            }
             while (($data = fgetcsv($handle, null, ",")) !== FALSE) {
-                $drug = $this->drug_model->findOne(array('name' => $data['1']));
+                $drug = $this->drug_model->findOne(['user_id' => $this->session->userdata('user_id'), 'LOWER(name)' => strtolower($data[$name_index])]);
+                
+                $save['user_id'] = $this->session->userdata('user_id');
+                $save['name'] = $data[$name_index];
+                $save['unit'] = $data[$unit_index];
+                $save['price'] = $data[$price_index];
+                $save['in_price'] = $data[$in_price_index];
+                $save['note'] = $data[$note_index];
+                $save['removed'] = 0;
+                
                 if (!$drug) {
-                    $drug['user_id'] = $this->session->userdata('user_id');
-                    $drug['name'] = $data[1];
-                    $drug['unit'] = $data[2];
-                    $drug['price'] = 0;
-                    $drug['in_price'] = $data[6];
-                    $drug['note'] = $data[4];
-                    $drug['date_created'] = time();
-                    
-                    $this->drug_model->save($drug);
+                    $save['date_created'] = time();
+                    $this->drug_model->save($save);
+                } else {
+                    $save['date_updated'] = time();
+                    $this->drug_model->update($drug->id, $save);
                 }
             }
             fclose($handle);
         }
-	    $this->render('drug/import');
+	    redirect('drug/index');
 	}
 
     public function search()
