@@ -3,7 +3,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">Đề nghị dùng thuốc</h4>
-                <button type="button" class="close asb-btn-icon" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close asb-btn-icon" data-dismiss="modal" aria-label="Close" style="margin-top: -25px;">
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
@@ -23,7 +23,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">Lịch sử khám chữa bệnh</h4>
-                <button type="button" class="close asb-btn-icon" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close asb-btn-icon" data-dismiss="modal" aria-label="Close" style="margin-top: -25px;">
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
