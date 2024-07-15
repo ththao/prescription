@@ -306,13 +306,14 @@ class Migrate extends My_Controller
         
         if ($diagnostics) {
             foreach ($diagnostics as $diagnostic) {
-                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($diagnostic->diagnostic))->get();
+                $diag = $this->replaceAbbreviations($diagnostic->diagnostic);
+                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($diag))->get();
                 $diagnostic_template = $query->row();
                 
                 if ($diagnostic_template) {
                     $diagnostic_template_id = $diagnostic_template->id;
                 } else {
-                    $this->db->insert('diagnostic_template', ['diagnostic' => $diagnostic->diagnostic]);
+                    $this->db->insert('diagnostic_template', ['diagnostic' => $diag]);
                     $diagnostic_template_id = $this->db->insert_id();
                 }
                 

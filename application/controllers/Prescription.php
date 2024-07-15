@@ -213,13 +213,14 @@ class Prescription extends My_Controller {
             if (isset($_POST['diagnostic']['diagnostic_template_id']) && $_POST['diagnostic']['diagnostic_template_id']) {
                 $diagnostic_template_id = $_POST['diagnostic']['diagnostic_template_id'];
             } else {
-                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($_POST['diagnostic']['diagnostic']))->get();
+                $diag = $this->replaceAbbreviations($_POST['diagnostic']['diagnostic']);
+                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($diag))->get();
                 $diagnostic_template = $query->row();
                 
                 if ($diagnostic_template) {
                     $diagnostic_template_id = $diagnostic_template->id;
                 } else {
-                    $this->db->insert('diagnostic_template', ['diagnostic' => $_POST['diagnostic']['diagnostic']]);
+                    $this->db->insert('diagnostic_template', ['diagnostic' => $diag]);
                     $diagnostic_template_id = $this->db->insert_id();
                 }
             }

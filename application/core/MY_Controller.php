@@ -116,6 +116,42 @@ class My_Controller extends CI_Controller
         return $config;
     }
     
+    protected function replaceAbbreviations($string)
+    {
+        if ($this->session->userdata('user_id') == 3) {
+            $parts = explode('/', $string);
+            
+            if ($parts) {
+                foreach ($parts as $index => $part) {
+                    $part = strtolower(trim($part));
+                    switch  ($part) {
+                        case 'rlth':
+                            $parts[$index] = 'Rối loạn tiêu hóa';
+                            break;
+                        case 'rlgn':
+                            $parts[$index] = 'Rối loạn giấc ngủ';
+                            break;
+                        case 'vhm':
+                            $parts[$index] = 'viêm họng mũi';
+                            break;
+                        case 'vmdu':
+                            $parts[$index] = 'Viêm mũi dị ứng';
+                            break;
+                        case 'vmxdu':
+                            $parts[$index] = 'Viêm mũi xoang dị ứng';
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            
+            return implode('/', $parts);
+        }
+        
+        return $string;
+    }
+    
     protected function prescription_by_diagnostic($diagnostic_template_id, $do_now = false)
     {
         set_time_limit(0);
