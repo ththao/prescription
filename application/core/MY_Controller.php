@@ -132,7 +132,13 @@ class My_Controller extends CI_Controller
                             $parts[$index] = 'Rối loạn giấc ngủ';
                             break;
                         case 'vhm':
-                            $parts[$index] = 'viêm họng mũi';
+                            $parts[$index] = 'viêm họng mạn';
+                            break;
+                        case 'vhc':
+                            $parts[$index] = 'viêm họng cấp';
+                            break;
+                        case 'vmhc':
+                            $parts[$index] = 'viêm mũi họng cấp';
                             break;
                         case 'vmdu':
                             $parts[$index] = 'Viêm mũi dị ứng';
@@ -146,7 +152,7 @@ class My_Controller extends CI_Controller
                 }
             }
             
-            return implode('/', $parts);
+            return $parts;
         }
         
         return $string;

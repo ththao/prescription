@@ -76,7 +76,7 @@ class Prescription extends My_Controller {
             $template_names = array();
             if ($templates) {
                 foreach ($templates as $template) {
-                    $template_names[] = ['id' => $template->id, 'value' => $template->diagnostic];
+                    $template_names[] = $template->diagnostic;
                 }
             }
             $js_template_names = json_encode($template_names);
@@ -154,20 +154,28 @@ class Prescription extends My_Controller {
     
     public function suggest()
     {
-        if (isset($_POST['diagnostic_template_id']) && $_POST['diagnostic_template_id']) {
-            $this->db->distinct()->select('drug.id, drug.name, drug.unit, diagnostic_template_prescription.most_used');
-            $this->db->from('diagnostic_template_prescription');
-            $this->db->join('drug', 'LOWER(diagnostic_template_prescription.drug_name) = LOWER(drug.name) AND drug.removed = 0 AND drug.user_id = ' . $this->session->userdata('user_id'), 'INNER');
-            $this->db->where('diagnostic_template_prescription.diagnostic_template_id', $_POST['diagnostic_template_id']);
-            $this->db->order_by('drug.name');
-            $query = $this->db->get();
-            print_r($this->db->last_query());die;
-            $drugs = $query->result();
+        if (isset($_POST['diagnostic']) && $_POST['diagnostic']) {
+            $diagnostics = explode('/', $_POST['diagnostic']);
+            $drugs = [];
             
-            $html = $this->load->view('prescription/suggested_drugs', ['drugs' => $drugs], true);
+            foreach ($diagnostics as $diagnostic) {
+                $this->db->distinct()->select('drug.id, drug.name, drug.unit, diagnostic_template_prescription.most_used');
+                $this->db->from('diagnostic_template_prescription');
+                $this->db->join('diagnostic_template', 'diagnostic_template.id = diagnostic_template_prescription.diagnostic_template_id', 'INNER');
+                $this->db->join('drug', 'LOWER(diagnostic_template_prescription.drug_name) = LOWER(drug.name) AND drug.removed = 0 AND drug.user_id = ' . $this->session->userdata('user_id'), 'INNER');
+                $this->db->where('LOWER(diagnostic_template.diagnostic) = "' . $diagnostic . '"', null);
+                $this->db->order_by('drug.name');
+                $query = $this->db->get();
+                
+                $drugs = array_merge($drugs, $query->result());
+            }
             
-            echo json_encode(['success' => 1, 'html' => $html]);
-            exit();
+            if ($drugs) {
+                $html = $this->load->view('prescription/suggested_drugs', ['drugs' => $drugs], true);
+                
+                echo json_encode(['success' => 1, 'html' => $html]);
+                exit();
+            }
         }
         
         echo json_encode(['success' => 0]);
@@ -192,6 +200,8 @@ class Prescription extends My_Controller {
             
             $this->db->trans_start();
             
+            $no_abb_diagnostic = $this->replaceAbbreviations($_POST['diagnostic']['diagnostic']);
+            
             // Save new patient
             if (isset($_POST['patient']) && isset($_POST['patient']['id']) && $_POST['patient']['id']) {
                 $patient = $this->patient_model->findOne(['id' => $_POST['patient']['id'], 'removed' => 0]);
@@ -210,28 +220,27 @@ class Prescription extends My_Controller {
                 }
             }
             
-            if (isset($_POST['diagnostic']['diagnostic_template_id']) && $_POST['diagnostic']['diagnostic_template_id']) {
+            /*if (isset($_POST['diagnostic']['diagnostic_template_id']) && $_POST['diagnostic']['diagnostic_template_id']) {
                 $diagnostic_template_id = $_POST['diagnostic']['diagnostic_template_id'];
             } else {
-                $diag = $this->replaceAbbreviations($_POST['diagnostic']['diagnostic']);
-                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($diag))->get();
+                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($no_abb_diagnostic))->get();
                 $diagnostic_template = $query->row();
                 
                 if ($diagnostic_template) {
                     $diagnostic_template_id = $diagnostic_template->id;
                 } else {
-                    $this->db->insert('diagnostic_template', ['diagnostic' => $diag]);
+                    $this->db->insert('diagnostic_template', ['diagnostic' => $no_abb_diagnostic]);
                     $diagnostic_template_id = $this->db->insert_id();
                 }
-            }
+            }*/
             
             // Update diagnostic of patient
             $diag = $this->diagnostic_model->findOne(['id' => $id, 'user_id' => $this->session->userdata('user_id')]);
             if ($diag) {
                 $this->diagnostic_model->update($diag->id, array(
                     'patient_id' => $patient_id,
-                    'diagnostic' => $_POST['diagnostic']['diagnostic'],
-                    'diagnostic_template_id' => $diagnostic_template_id,
+                    'diagnostic' => $no_abb_diagnostic,
+                    //'diagnostic_template_id' => $diagnostic_template_id,
                     'note' => $_POST['diagnostic']['note'],
                     'date_updated' => time(),
                     'removed' => 0
@@ -242,8 +251,8 @@ class Prescription extends My_Controller {
                 $diagnostic_id = $this->diagnostic_model->save(array(
                     'user_id' => $this->session->userdata('user_id'),
                     'patient_id' => $patient_id,
-                    'diagnostic' => $_POST['diagnostic']['diagnostic'],
-                    'diagnostic_template_id' => $diagnostic_template_id,
+                    'diagnostic' => $no_abb_diagnostic,
+                    //'diagnostic_template_id' => $diagnostic_template_id,
                     'note' => $_POST['diagnostic']['note'],
                     'date_created' => time()
                 ));
@@ -346,7 +355,7 @@ class Prescription extends My_Controller {
                 $this->db->where('id NOT IN (' . implode(',', $ids) . ')', null)->where('user_id', $this->session->userdata('user_id'))->where('diagnostic_id', $diagnostic_id)->delete('prescription');
             }
             
-            $this->prescription_by_diagnostic($diagnostic_template_id, 1);
+            //$this->prescription_by_diagnostic($diagnostic_template_id, 1);
 
             $this->db->trans_complete();
             echo json_encode(array('success' => 'Đã lưu thành công.', 'url' => '/prescription/index?diagnostic_id=' . $diagnostic_id));

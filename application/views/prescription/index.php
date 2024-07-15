@@ -101,7 +101,54 @@
         });
         
         var template_names = <?php echo $template_names; ?>;
+        function split( val ) {
+        	return val.split( /\/\s*/ );
+        }
+        function extractLast( term ) {
+        	return split( term ).pop();
+        }
         $(".diagnostic").autocomplete({
+            minLength: 0,
+            source: function( request, response ) {
+            	response($.ui.autocomplete.filter(template_names, extractLast( request.term)));
+            },
+            focus: function() {
+            	return false;
+            },
+            select: function(event, ui) {
+                var terms = split( this.value );
+                // remove the current input
+                terms.pop();
+                // add the selected item
+                terms.push(ui.item.value);
+                // add placeholder to get the comma-and-space at the end
+                terms.push("");
+                this.value = terms.join("/ ");
+                return false;
+            }
+        });
+        
+        $(document).on("blur", ".diagnostic", function() {
+        	var diagnostic = $(this).val();
+        	$.ajax({
+                url:"/prescription/suggest",
+                data: {
+                	diagnostic: diagnostic
+                },
+                type: "POST",
+                dataType: 'json',
+                success:function(data) {
+                    if (data.success) {
+                    	$('#suggest-drugs').find('.modal-body').html(data.html);
+                        $('#suggest-drugs').modal('show');
+        				$('.btn-print-bill').addClass('hide');
+        				$('.btn-print-prescription').addClass('hide');
+                    }
+                }
+            });
+        });
+		
+        /*$(".diagnostic").autocomplete({
             source: template_names,
             select: function (event, ui) {
             
@@ -126,7 +173,7 @@
                     });
                 }
 			}
-        });
+        });*/
         
         $('.save-item').click(function (event) {
             // Prevent default posting of form

@@ -301,25 +301,32 @@ class Migrate extends My_Controller
     
     public function templates()
     {
-        $query = $this->db->select('id, diagnostic')->from('diagnostic')->where('diagnostic_template_id IS NULL', null)->where('user_id', $this->session->userdata('user_id'))->limit(100)->get();
+        $query = $this->db->select('id, diagnostic')->from('diagnostic')->where('diagnostic_template_id IS NULL', null)->where('user_id', $this->session->userdata('user_id'))->limit(10)->get();
         $diagnostics = $query->result();
         
         if ($diagnostics) {
             foreach ($diagnostics as $diagnostic) {
-                $diag = $this->replaceAbbreviations($diagnostic->diagnostic);
-                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($diag))->get();
-                $diagnostic_template = $query->row();
-                
-                if ($diagnostic_template) {
-                    $diagnostic_template_id = $diagnostic_template->id;
-                } else {
-                    $this->db->insert('diagnostic_template', ['diagnostic' => $diag]);
-                    $diagnostic_template_id = $this->db->insert_id();
+                $diags = $this->replaceAbbreviations($diagnostic->diagnostic);
+                if ($diags) {
+                    foreach ($diags as $diag) {
+                        $diag = trim($diag);
+                        if ($diag != '') {
+                            $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($diag))->get();
+                            $diagnostic_template = $query->row();
+                            
+                            if ($diagnostic_template) {
+                                $diagnostic_template_id = $diagnostic_template->id;
+                            } else {
+                                $this->db->insert('diagnostic_template', ['diagnostic' => $diag]);
+                                $diagnostic_template_id = $this->db->insert_id();
+                            }
+                            
+                            $this->prescription_by_diagnostic($diagnostic_template_id, 1);
+                        }
+                    }
                 }
                 
-                $this->db->where('id', $diagnostic->id)->update('diagnostic', ['diagnostic_template_id' => $diagnostic_template_id]);
-                
-                $this->prescription_by_diagnostic($diagnostic_template_id, 1);
+                $this->db->where('id', $diagnostic->id)->update('diagnostic', ['diagnostic_template_id' => 1]);
             }
         }
     }
