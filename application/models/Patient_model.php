@@ -46,6 +46,7 @@ class Patient_model extends MY_Model {
         $this->db->select('COUNT(*) AS cnt');
         $this->db->from('patient');
         $this->db->join('diagnostic', 'diagnostic.patient_id = patient.id', 'INNER');
+        $this->db->where('diagnostic.user_id', $this->session->userdata('user_id'));
         $this->db->where('diagnostic.removed', 0);
         $this->db->where('patient.removed', 0);
         if (isset($search_param['patient_id']) && $search_param['patient_id']) {

@@ -161,7 +161,7 @@ class Prescription extends My_Controller {
             $this->db->where('diagnostic_template_prescription.diagnostic_template_id', $_POST['diagnostic_template_id']);
             $this->db->order_by('drug.name');
             $query = $this->db->get();
-            
+            print_r($this->db->last_query());die;
             $drugs = $query->result();
             
             $html = $this->load->view('prescription/suggested_drugs', ['drugs' => $drugs], true);

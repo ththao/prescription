@@ -299,6 +299,30 @@ class Migrate extends My_Controller
         redirect('about');
     }
     
+    public function templates()
+    {
+        $query = $this->db->select('id, diagnostic')->from('diagnostic')->where('diagnostic_template_id IS NULL', null)->where('user_id', $this->session->userdata('user_id'))->limit(100)->get();
+        $diagnostics = $query->result();
+        
+        if ($diagnostics) {
+            foreach ($diagnostics as $diagnostic) {
+                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($diagnostic->diagnostic))->get();
+                $diagnostic_template = $query->row();
+                
+                if ($diagnostic_template) {
+                    $diagnostic_template_id = $diagnostic_template->id;
+                } else {
+                    $this->db->insert('diagnostic_template', ['diagnostic' => $diagnostic->diagnostic]);
+                    $diagnostic_template_id = $this->db->insert_id();
+                }
+                
+                $this->db->where('id', $diagnostic->id)->update('diagnostic', ['diagnostic_template_id' => $diagnostic_template_id]);
+                
+                $this->prescription_by_diagnostic($diagnostic_template_id, 1);
+            }
+        }
+    }
+    
     private function buildOrderQuery($data)
     {
         if ($data) {
