@@ -306,7 +306,8 @@ class Migrate extends My_Controller
             
             foreach ($data as $index => $item) {
                 $sql .= '("' . $item['backup_id'] . '", "' . $item['user_id'] . '", "' . $item['diagnostic_id'] . '", "' . $item['service_id'] . '", "' . $item['quantity'] . '", "' . 
-                    $item['notes'] . '", "' . $item['price'] . '", "' . $item['date_created'] . '", "' . $item['date_updated'] . '", "' . $item['removed'] . '")';
+                    $item['notes'] . '", "' . $item['price'] . '", "' . (isset($item['date_created']) ? $item['date_created'] : time()) . '", "' . 
+                    (isset($item['date_updated']) ? $item['date_updated'] : '') . '", "' . $item['removed'] . '")';
                 if ($index < count($data) - 1) {
                     $sql .= ',';
                 }
@@ -322,7 +323,8 @@ class Migrate extends My_Controller
             $sql = 'INSERT INTO diagnostic(backup_id, user_id, patient_id, diagnostic, note, date_created, date_updated, removed) VALUES ';
             
             foreach ($data as $index => $item) {
-                $sql .= '("' . $item['backup_id'] . '", "' . $item['user_id'] . '", "' . $item['patient_id'] . '", "' . $item['diagnostic'] . '", "' . $item['note'] . '", "' . $item['date_created'] . '", "' . $item['date_updated'] . '", "' . $item['removed'] . '")';
+                $sql .= '("' . $item['backup_id'] . '", "' . $item['user_id'] . '", "' . $item['patient_id'] . '", "' . $item['diagnostic'] . '", "' . $item['note'] . '", "' . 
+                    (isset($item['date_created']) ? $item['date_created'] : time()) . '", "' . (isset($item['date_updated']) ? $item['date_updated'] : '') . '", "' . $item['removed'] . '")';
                 if ($index < count($data) - 1) {
                     $sql .= ',';
                 }
