@@ -174,7 +174,8 @@ class My_Controller extends CI_Controller
         $this->db->from('diagnostic');
         $this->db->join('prescription', 'prescription.diagnostic_id = diagnostic.id', 'INNER');
         $this->db->join('drug', 'prescription.drug_id = drug.id', 'INNER');
-        $this->db->where('diagnostic.diagnostic_template_id', $diagnostic_template_id);
+        $this->db->join('diagnostic_template', 'LOWER(diagnostic_template.diagnostic) = LOWER(diagnostic.diagnostic)', 'INNER');
+        $this->db->where('diagnostic_template.id', $diagnostic_template_id);
         $this->db->where('diagnostic.user_id', $this->session->userdata('user_id'));
         $this->db->where('prescription.user_id', $this->session->userdata('user_id'));
         $this->db->where('drug.user_id', $this->session->userdata('user_id'));
@@ -185,6 +186,7 @@ class My_Controller extends CI_Controller
         $query = $this->db->get();
         
         $all_drugs = $query->result();
+        //print_r($all_drugs);
         
         $pres_drugs = [];
         $group_drugs = [];

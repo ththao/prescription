@@ -301,7 +301,7 @@ class Migrate extends My_Controller
     
     public function templates()
     {
-        $query = $this->db->select('id, diagnostic')->from('diagnostic')->where('diagnostic_template_id IS NULL', null)->where('user_id', $this->session->userdata('user_id'))->limit(10)->get();
+        $query = $this->db->select('id, diagnostic')->from('diagnostic')->where('diagnostic_template_id IS NULL', null)->where('user_id', $this->session->userdata('user_id'))->limit(1000)->get();
         $diagnostics = $query->result();
         
         if ($diagnostics) {
@@ -327,6 +327,18 @@ class Migrate extends My_Controller
                 }
                 
                 $this->db->where('id', $diagnostic->id)->update('diagnostic', ['diagnostic_template_id' => 1]);
+            }
+        }
+    }
+    
+    public function update_templates()
+    {
+        $query = $this->db->select('id')->from('diagnostic_template')->where(' NOT EXISTS (SELECT diagnostic_template_id FROM diagnostic_template_prescription WHERE diagnostic_template_prescription.diagnostic_template_id = diagnostic_template.id)', null)->limit(100)->get();
+        $templates = $query->result();
+        
+        if ($templates) {
+            foreach ($templates as $template) {
+                $this->prescription_by_diagnostic($template->id, 1);
             }
         }
     }
