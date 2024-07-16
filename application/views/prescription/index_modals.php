@@ -7,7 +7,7 @@
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height: 500px; overflow: scroll;">
                 
             </div>
             <div class="modal-footer">
@@ -27,7 +27,7 @@
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="max-height: 500px; overflow: scroll;">
                 
             </div>
             <div class="modal-footer">

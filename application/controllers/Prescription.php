@@ -156,19 +156,18 @@ class Prescription extends My_Controller {
     {
         if (isset($_POST['diagnostic']) && $_POST['diagnostic']) {
             $diagnostics = explode('/', $_POST['diagnostic']);
-            $drugs = [];
-            
-            foreach ($diagnostics as $diagnostic) {
-                $this->db->distinct()->select('drug.id, drug.name, drug.unit, diagnostic_template_prescription.most_used');
-                $this->db->from('diagnostic_template_prescription');
-                $this->db->join('diagnostic_template', 'diagnostic_template.id = diagnostic_template_prescription.diagnostic_template_id', 'INNER');
-                $this->db->join('drug', 'LOWER(diagnostic_template_prescription.drug_name) = LOWER(drug.name) AND drug.removed = 0 AND drug.user_id = ' . $this->session->userdata('user_id'), 'INNER');
-                $this->db->where('LOWER(diagnostic_template.diagnostic) = "' . $diagnostic . '"', null);
-                $this->db->order_by('drug.name');
-                $query = $this->db->get();
-                
-                $drugs = array_merge($drugs, $query->result());
+            foreach ($diagnostics as $index => $diagnostic) {
+                $diagnostics[$index] = '"' . trim($diagnostic) . '"';
             }
+            
+            $this->db->distinct()->select('drug.id, drug.name, drug.unit, diagnostic_template_prescription.most_used');
+            $this->db->from('diagnostic_template_prescription');
+            $this->db->join('diagnostic_template', 'diagnostic_template.id = diagnostic_template_prescription.diagnostic_template_id', 'INNER');
+            $this->db->join('drug', 'LOWER(diagnostic_template_prescription.drug_name) = LOWER(drug.name) AND drug.removed = 0 AND drug.user_id = ' . $this->session->userdata('user_id'), 'INNER');
+            $this->db->where('LOWER(diagnostic_template.diagnostic) IN (' . implode(',', $diagnostics) . ')', null);
+            $this->db->order_by('diagnostic_template_prescription.most_used DESC, drug.name ASC');
+            $query = $this->db->get();
+            $drugs = $query->result();
             
             if ($drugs) {
                 $html = $this->load->view('prescription/suggested_drugs', ['drugs' => $drugs], true);
