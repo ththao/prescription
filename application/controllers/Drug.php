@@ -7,7 +7,7 @@ class Drug extends My_Controller
     {
         parent::__construct();
 
-        $this->loadModel(array('drug_model'));
+        $this->loadModel(array('drug_model', 'ingredient_model'));
         $this->load->library('pagination');
         $this->load->helper('url');
     }
@@ -41,8 +41,18 @@ class Drug extends My_Controller
             }
         }
         $js_my_drug_names = json_encode($my_drug_names);
+        
+        
+        $ingredients = $this->ingredient_model->findAll();
+        $ingredient_names = [];
+        if ($ingredients) {
+            foreach ($ingredients as $ingredient) {
+                $ingredient_names[] = ['id' => $ingredient->id, 'value' => $ingredient->ingredient_name, 'label' => $ingredient->ingredient_name];
+            }
+        }
+        $js_ingredient_names = json_encode($ingredient_names);
 
-        $this->render('drug/index', ['drug_names' => $js_drug_names, 'my_drug_names' => $js_my_drug_names, 'models' => $data, 'search' => '']);
+        $this->render('drug/index', ['drug_names' => $js_drug_names, 'my_drug_names' => $js_my_drug_names, 'ingredient_names' => $js_ingredient_names, 'models' => $data, 'search' => '']);
 	}
 	
 	public function import()
@@ -191,5 +201,85 @@ class Drug extends My_Controller
             $this->drug_model->update($id, ['removed' => 0, 'date_updated' => time()]);
         }
         redirect("/drug/index");
+    }
+    
+    public function ingredients()
+    {
+        $drug = $this->drug_model->findOne(['id' => $_POST['drug_id'], 'user_id' => $this->session->userdata('user_id')]);
+        
+        if ($drug) {
+            $this->db->distinct()->select('drug.id AS drug_id, ingredient.id AS ingredient_id, ingredient.ingredient_name');
+            $this->db->from('drug');
+            $this->db->join('drug_ingredients', 'drug_ingredients.drug_id = drug.id', 'INNER');
+            $this->db->join('ingredient', 'ingredient.id = drug_ingredients.ingredient_id', 'INNER');
+            $this->db->where('drug.id', $drug->id);
+            $this->db->order_by('ingredient.ingredient_name');
+            $query = $this->db->get();
+            
+            $ingredients = $query->result();
+            
+            $html = $this->load->view('drug/ingredients', ['drug' => $drug, 'ingredients' => $ingredients], true);
+            
+            echo json_encode(['status' => 1, 'drug_id' => $drug->id, 'html' => $html]);
+            return;
+        }
+        
+        echo json_encode(['status' => 0]);
+        return;
+    }
+    
+    public function add_ingredient()
+    {
+        
+        $drug = $this->drug_model->findOne(['id' => $_POST['drug_id'], 'user_id' => $this->session->userdata('user_id')]);
+        
+        if ($drug) {
+            
+            $query = $this->db->select('id')->from('ingredient')->where('LOWER(ingredient_name) = LOWER("' . $_POST['ingredient_name'] . '")', null)->get();
+            $ingredient = $query->row();
+            
+            if (!$ingredient) {
+                $this->db->insert('ingredient', ['ingredient_name' => $_POST['ingredient_name']]);
+                $ingredient_id = $this->db->insert_id();
+            } else {
+                $ingredient_id = $ingredient->id;
+            }
+            
+            $query = $this->db->select('id')->from('drug_ingredients')->where('drug_id', $drug->id)->where('ingredient_id', $ingredient_id)->get();
+            if (!$query->row()) {
+                $this->db->insert('drug_ingredients', ['ingredient_id' => $ingredient_id, 'drug_id' => $drug->id]);
+            }
+            
+            $html = '
+                <tr>
+                    <td align="left" style="padding: 5px;">' . $_POST['ingredient_name'] . '</td>
+                	<td align="center" style="padding: 5px;">
+                	<span class="glyphicon glyphicon-remove remove-drug-ingredient" title="Xóa thành phần" drug_id="' . $drug->id . '" ingredient_id="' . $ingredient_id . '" style="color: red; cursor: pointer; "></span>
+                	</td>
+                </tr>
+            ';
+            
+            echo json_encode(['status' => 1, 'html' => $html]);
+            return;
+        }
+        
+        echo json_encode(['status' => 0]);
+        return;
+    }
+    
+    public function remove_ingredient()
+    {
+        
+        $drug = $this->drug_model->findOne(['id' => $_POST['drug_id'], 'user_id' => $this->session->userdata('user_id')]);
+        
+        if ($drug) {
+            $this->db->where('drug_id', $drug->id)->where('ingredient_id', $_POST['ingredient_id'])->delete('drug_ingredients');
+            
+            echo json_encode(['status' => 1]);
+            return;
+        }
+        
+        echo json_encode(['status' => 0]);
+        return;
     }
 }

@@ -86,6 +86,7 @@
                 </td>
                 <td style="text-align: center; width: 100px">
                     <span class="glyphicon glyphicon-edit drug-item-save" drug-url="/drug/update/<?php echo $item->id ?>" title="Cập nhật thuốc" style="color: blue; cursor: pointer; "></span>&nbsp;
+                    <span class="glyphicon glyphicon-search drug-item-ingredients" drug_id="<?php echo $item->id ?>" title="Thành phần thuốc" style="color: blue; cursor: pointer; "></span>&nbsp;
                     <a href="/drug/delete/<?php echo $item->id ?>" title="Xóa thuốc"><span title="Xóa thuốc" class="glyphicon glyphicon-remove" style="color: red"></span></a>
                 </td>
             </tr>
@@ -109,6 +110,34 @@
     </table>
 </div>
 
+<div class="modal fade" id="drug-ingredients">
+    <div class="modal-dialog modal-dialog-centered asb-modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Thành phần thuốc</h4>
+                <button type="button" class="close asb-btn-icon" data-dismiss="modal" aria-label="Close" style="margin-top: -25px;">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 500px; overflow: scroll;">
+            	<table class="table-drug-ingredients" width="100%" border="1" style="text-align: center; font-size: 13px;">
+            		<thead>
+                    	<tr>
+                            <th style="padding: 5px; width: 80%">Thành phần</th>
+                            <th style="padding: 5px; width: 20%"></th>
+                        </tr>
+                        <tr>
+                            <th style="padding: 5px;"><input type="text" class="form-control ingredient-name" placeholder="Tên thành phần" name="ingredient_name"  /></th>
+                            <th style="text-align: center; padding: 5px;"><span class="glyphicon glyphicon-check add-drug-ingredient" title="Thêm thành phần" drug_id="" style="color: blue; cursor: pointer; "></span></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+				</table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     $(document).ready(function() {
         $(document).on('keydown.autocomplete', ".drug-search", function() {
@@ -120,6 +149,13 @@
         $(document).on('keydown.autocomplete', ".add-drug-name", function() {
             $(this).autocomplete({
                 source: <?php echo $drug_names; ?>
+            });
+        });
+        
+        $(document).on('keydown.autocomplete', "#drug-ingredients .ingredient-name", function() {
+            $(this).autocomplete({
+                source: <?php echo $ingredient_names; ?>,
+                appendTo: "#drug-ingredients"
             });
         });
         
@@ -151,7 +187,7 @@
             }
         });
         
-        $(document).on("click", ".glyphicon-edit", function(e) {
+        $(document).on("click", ".drug-item-save", function(e) {
             $(this).parents(".drug-item").removeClass("drug-item-display").addClass("drug-item-edit");
             $(this).removeClass("glyphicon-edit").addClass("glyphicon-ok");
             $(this).attr('id', 'drug_row');
@@ -183,6 +219,28 @@
                         location.reload();
                     } else {
                         alert(data.error);
+                    }
+                }
+            });
+        });
+        
+    	$(document).on('click', '.drug-item-ingredients', function(e) {
+        	e.preventDefault();
+        	
+        	var selected = $(this);
+        	
+        	$.ajax({
+                url:"/drug/ingredients",
+                data: {
+                	drug_id: $(selected).attr('drug_id')
+                },
+                type: "POST",
+                dataType: 'json',
+                success:function(data) {
+                    if (data.status) {
+                    	$('#drug-ingredients').find('.add-drug-ingredient').attr('drug_id', data.drug_id);
+                    	$('#drug-ingredients').find('.modal-body .table-drug-ingredients tbody').html(data.html);
+                        $('#drug-ingredients').modal('show');
                     }
                 }
             });
