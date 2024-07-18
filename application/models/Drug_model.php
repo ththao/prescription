@@ -22,7 +22,29 @@ class Drug_model extends MY_Model {
         
         $query = $this->db->get();
         
-        return $query->result();
+        $data = $query->result();
+        if ($data) {
+            foreach ($data as $item) {
+                $this->db->distinct()->select('ingredient.ingredient_name');
+                $this->db->from('drug_ingredients');
+                $this->db->join('ingredient', 'ingredient.id = drug_ingredients.ingredient_id', 'INNER');
+                $this->db->where('drug_ingredients.drug_id', $item->id);
+                $this->db->order_by('ingredient.ingredient_name');
+                $query = $this->db->get();
+                
+                $ingredients = $query->result();
+                
+                $ing = '';
+                if ($ingredients) {
+                    foreach ($ingredients as $ingredient) {
+                        $ing .= ($ing ? '<br/>' : '') . $ingredient->ingredient_name;
+                    }
+                }
+                $item->ingredients = $ing;
+            }
+        }
+        
+        return $data;
     }
 
     function count($search_param)

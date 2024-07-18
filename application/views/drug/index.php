@@ -40,6 +40,7 @@
             <th style="width: 100px">Đơn vị</th>
             <th style="width: 150px">Giá Nhập (VNĐ)</th>
             <th style="width: 150px">Giá Bán (VNĐ)</th>
+            <th>Thành phần</th>
             <th>Ghi chú</th>
             <th>Sửa / Xóa</th>
         </tr>
@@ -50,6 +51,7 @@
                     <input type="text" class="form-control drug-search" placeholder="Tìm kiếm" name="search" value="<?php echo $search; ?>">
                 </form>
             </td>
+            <td></td>
             <td></td>
             <td></td>
             <td></td>
@@ -79,6 +81,9 @@
                 <td>
                     <label class="display"><?php echo number_format($item->price, 0, ',', '.') ?></label>
                     <input type="text" value="<?php echo $item->price ?>" class="form-control edit drug-price" name="price"/>
+                </td>
+                <td>
+                    <label class=""><?php echo $item->ingredients; ?></label>
                 </td>
                 <td>
                     <label class="display"><?php echo $item->note ?></label>
@@ -241,6 +246,53 @@
                     	$('#drug-ingredients').find('.add-drug-ingredient').attr('drug_id', data.drug_id);
                     	$('#drug-ingredients').find('.modal-body .table-drug-ingredients tbody').html(data.html);
                         $('#drug-ingredients').modal('show');
+                    }
+                }
+            });
+        });
+        
+    	$(document).on('click', '#drug-ingredients .add-drug-ingredient', function(e) {
+    		e.preventDefault();
+    		var selected = $(this);
+    		
+            if ($('#drug-ingredients').find(".ingredient-name").val() != '') {
+                $.ajax({
+                    url: '/drug/add_ingredient',
+                    data: {
+                        drug_id: $(selected).attr('drug_id'),
+						ingredient_name: $("#drug-ingredients .ingredient-name").val()
+                    },
+                    type: "POST",
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.status) {
+                    		$('#drug-ingredients').find('.modal-body .table-drug-ingredients tbody').append(data.html);
+                    		$('#drug-ingredients').find(".ingredient-name").val("");
+                        } else {
+                            alert(data.error);
+                        }
+                    }
+                });
+            }
+        });
+        
+    	$(document).on('click', '#drug-ingredients .remove-drug-ingredient', function(e) {
+    		e.preventDefault();
+    		var selected = $(this);
+    		
+            $.ajax({
+                url: '/drug/remove_ingredient',
+                data: {
+                    drug_id: $(selected).attr('drug_id'),
+					ingredient_id: $(selected).attr('ingredient_id')
+                },
+                type: "POST",
+                dataType: 'json',
+                success: function (data) {
+                    if (data.status) {
+                		$(selected).parents('tr').remove();
+                    } else {
+                        alert(data.error);
                     }
                 }
             });
