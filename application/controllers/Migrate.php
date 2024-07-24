@@ -396,4 +396,42 @@ class Migrate extends My_Controller
             $this->db->query($sql);
         }
     }
+    
+    public function drug_notes()
+    {
+        $query = $this->db->select('id, name, note')->from('drug')->where('( note IS NOT NULL AND note <> "" )', null)->get();
+        $drugs = $query->result();
+        
+        if ($drugs) {
+            foreach ($drugs as $drug) {
+                $sql = 'UPDATE drug SET note = "' . $drug->note . '" WHERE (note is NULL OR note = "") AND LOWER(name) = LOWER("' . $drug->name . '")';
+                $this->db->query($sql);
+            }
+        }
+    }
+    
+    public function drug_ingredients()
+    {
+        $query = $this->db->select('id, name')->from('drug')->where(' EXISTS ( SELECT id FROM drug_ingredients WHERE drug_id = drug.id )', null)->get();
+        $drugs = $query->result();
+        
+        if ($drugs) {
+            foreach ($drugs as $drug) {
+                $query1 = $this->db->select('ingredient_id')->from('drug_ingredients')->where('drug_id', $drug->id)->get();
+                $ingredients = $query1->result();
+                
+                if ($ingredients) {
+                    foreach ($ingredients as $ingredient) {
+                        $sql = '
+                            INSERT INTO drug_ingredients (drug_id, ingredient_id) 
+                            SELECT drug.id, ' . $ingredient->ingredient_id . ' FROM drug 
+                            WHERE NOT EXISTS ( SELECT id FROM drug_ingredients di2 WHERE di2.drug_id = drug.id )
+                            AND LOWER(drug.name) = LOWER("' . $drug->name . '")
+                        ';
+                        $this->db->query($sql);
+                    }
+                }
+            }
+        }
+    }
 }
