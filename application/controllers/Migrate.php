@@ -434,4 +434,134 @@ class Migrate extends My_Controller
             }
         }
     }
+    
+    public function crawl_drugs()
+    {
+        // $this->load->library('simple_html_dom');
+        ini_set('memory_limit', '4096M');
+
+        $url = 'https://nhathuoclongchau.com.vn/thuoc/tra-cuu-thuoc-a-z?alphabet=B&page=';
+        for ($i = 1; $i <= 10; $i ++) {
+            $html = file_get_contents($url . $i);
+
+            $dom = @DOMDocument::loadHTML($html);
+            $divs = $dom->getElementsByTagName('div');
+            foreach ($divs as $div) {
+                if ($div->getAttribute('data-lcpr') == 'prr-id-medicinal-ingredient-drug-list') {
+                    $as = $div->getElementsByTagName('a');
+                    foreach ($as as $a) {
+                        echo ($a->getAttribute('href') . '<br/>');
+                    }
+                }
+            }
+        }
+    }
+    
+    public function drug_template()
+    {
+        set_time_limit(0);
+        
+        if (($handle = fopen("drugs.csv", "r")) !== FALSE) {
+            while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+                if (isset($data[0]) && $data[0]) {
+                    $url = 'https://nhathuoclongchau.com.vn' . $data[0];
+                    
+                    $query = $this->db->select('id')->from('drug_template')->where('reference_url', $url)->get();
+                    if (!$row = $query->row()) {
+                        $this->import_drug_template($url);
+                    }
+                }
+            }
+            fclose($handle);
+        }
+    }
+    
+    private function import_drug_template($url)
+    {
+        $drug_name = explode('/', $url);
+        $drug_name = $drug_name[count($drug_name) - 1];
+        $drug_name = str_replace('.html', '', $drug_name);
+        $drug_name = ucwords(str_replace('-', ' ', $drug_name));
+        
+        $drug_template = ['name' => $drug_name, 'reference_url' => $url, 'date_created' => time()];
+        $ingredients = [];
+        
+        $html = file_get_contents($url);
+        
+        $dom = @DOMDocument::loadHTML($html);
+        $tables = $dom->getElementsByTagName('table');
+        foreach ($tables as $table) {
+            if ($table->getAttribute('class') == 'content-list') {
+                $trs = $table->getElementsByTagName('tr');
+                foreach ($trs as $tr) {
+                    if ($tr->getAttribute('class') == 'content-container') {
+                        $tds = $tr->getElementsByTagName('td');
+                        $item = [];
+                        foreach ($tds as $td) {
+                            $item[] = $td->nodeValue;
+                        }
+                        if ($item[0] == 'Danh mục') {
+                            $query = $this->db->select('id')->from('drug_category')->where('LOWER(category_name) = LOWER("' . $item[1] . '")', null)->get();
+                            if ($category = $query->row()) {
+                                $drug_template['drug_category_id'] = $category->id;
+                            } else {
+                                $this->db->insert('drug_category', ['category_name' => $item[1]]);
+                                $drug_template['drug_category_id'] = $this->db->insert_id();
+                            }
+                        }
+                        if ($item[0] == 'Thành phần') {
+                            $ingredient_names = explode(',', $item[1]);
+                            
+                            if ($ingredient_names) {
+                                foreach ($ingredient_names as $ingredient_name) {
+                                    $ingredient_name = trim($ingredient_name);
+                                    
+                                    $query = $this->db->select('id')->from('ingredient')->where('LOWER(ingredient_name) = LOWER("' . $ingredient_name . '")', null)->get();
+                                    if ($ingredient = $query->row()) {
+                                        $ingredients[] = $ingredient->id;
+                                    } else {
+                                        $this->db->insert('ingredient', ['ingredient_name' => $ingredient_name]);
+                                        $ingredients[] = $this->db->insert_id();
+                                    }
+                                }
+                            }
+                        }
+                        if ($item[0] == 'Nhà sản xuất') {
+                            $drug_template['vendor'] = $item[1];
+                        }
+                        if ($item[0] == 'Nước sản xuất') {
+                            $drug_template['country'] = $item[1];
+                        }
+                        if ($item[0] == 'Mô tả ngắn') {
+                            $drug_template['description'] = $item[1];
+                        }
+                        if ($item[0] == 'Quy cách') {
+                            if (strpos(strtolower($item[1]), 'viên') !== false || strpos($item[1], 'Viên') !== false || strpos($item[1], 'VIÊN') !== false) {
+                                $drug_template['unit'] = 'Viên';
+                            } else if (strpos($item[1], 'ống') !== false || strpos($item[1], 'Ống') !== false || strpos($item[1], 'ỐNG') !== false) {
+                                $drug_template['unit'] = 'Ống';
+                            } else if (strpos($item[1], 'gói') !== false || strpos($item[1], 'Gói') !== false || strpos($item[1], 'GÓI') !== false) {
+                                $drug_template['unit'] = 'Gói';
+                            } else if (strpos($item[1], 'tuýp') !== false || strpos($item[1], 'Tuýp') !== false || strpos($item[1], 'TUÝP') !== false) {
+                                $drug_template['unit'] = 'Tuýp';
+                            } else if (strpos($item[1], 'chai') !== false || strpos($item[1], 'Chai') !== false || strpos($item[1], 'CHAI') !== false) {
+                                $drug_template['unit'] = 'Chai';
+                            } else if (strpos($item[1], 'hộp') !== false || strpos($item[1], 'Hộp') !== false || strpos($item[1], 'HỘP') !== false) {
+                                $drug_template['unit'] = 'Hộp';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        $this->db->insert('drug_template', $drug_template);
+        $id = $this->db->insert_id();
+        
+        if ($id && $ingredients) {
+            foreach ($ingredients as $ingredient) {
+                $this->db->insert('drug_template_ingredients', ['drug_template_id' => $id, 'ingredient_id' => $ingredient]);
+            }
+        }
+    }
 }
