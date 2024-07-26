@@ -33,9 +33,11 @@
             <?php echo $models['pagination']; ?>
         </nav>
         <div class="pull-right" style="width: 40%;">
-            <form method="post" action="<?php echo site_url('drug/import'); ?>" style="display: flex; margin: 20px 0;" enctype="multipart/form-data">
+            <form method="post" action="<?php echo site_url('drug/import'); ?>" style="margin: 20px 0;" enctype="multipart/form-data">
                 <input type="file" class="form-control" name="drugs">
             	<button type="submit" name="submit">Import</button>
+            
+            	<a href="#" title="Thêm thuốc" class="btn btn-success pull-right btn-add-drug"><span title="Thêm thuốc" class="glyphicon glyphicon-add"></span>Thêm Thuốc</a>
             </form>
         </div>
     </div>
@@ -114,25 +116,52 @@
                 </td>
             </tr>
         <?php } ?>
-		<tr><td colspan="5"></td></tr>
-        <tr class="drug-item-new">
-            <td><input type="text" class="form-control add-drug-name" placeholder="Tên thuốc" name="name"></td>
-            <td>
-                <select class="form-control edit drug-unit" name="unit">
-                    <option value="Viên" selected>Viên</option>
-                    <option value="Chai">Chai</option>
-                    <option value="Gói">Gói</option>
-                    <option value="Ống">Ống</option>
-                </select>
-            </td>
-            <td><input type="text" class="form-control" placeholder="Loại" name="category_name"></td>
-            <td><input type="number" class="form-control" placeholder="Giá Nhập" name="in_price"></td>
-            <td><input type="number" class="form-control" placeholder="Giá Bán" name="price"></td>
-            <td></td>
-            <td><input type="text" class="form-control" placeholder="Ghi chú" name="note"></td>
-            <td style="text-align: center"><input type="submit" class="btn btn-success" id="add_drug" value="Thêm"></td>
-        </tr>
     </table>
+</div>
+
+<div class="modal fade" id="add-drug">
+    <div class="modal-dialog modal-dialog-centered asb-modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Thêm thuốc</h4>
+                <button type="button" class="close asb-btn-icon" data-dismiss="modal" aria-label="Close" style="margin-top: -25px;">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 500px; overflow: scroll;">
+            	<div class="form-group">
+            		<input type="text" class="form-control add-drug-name" placeholder="Tên thuốc" name="name">
+        		</div>
+            	<div class="form-group">
+            		<select class="form-control edit drug-unit" name="unit">
+                        <option value="Viên" selected>Viên</option>
+                        <option value="Chai">Chai</option>
+                        <option value="Gói">Gói</option>
+                        <option value="Ống">Ống</option>
+                        <option value="Tuýp">Tuýp</option>
+                    </select>
+				</div>
+            	<div class="form-group">
+            		<input type="text" class="form-control" placeholder="Loại" name="category_name">
+        		</div>
+            	<div class="form-group">
+            		<input type="number" class="form-control" placeholder="Giá Nhập" name="in_price">
+        		</div>
+            	<div class="form-group">
+            		<input type="number" class="form-control" placeholder="Giá Bán" name="price">
+        		</div>
+            	<div class="form-group">
+            		<input type="text" class="form-control ingredients" placeholder="Thành Phần" name="ingredients">
+        		</div>
+            	<div class="form-group">
+            		<textarea class="form-control" rows="3" name="note" placeholder="Ghi Chú"></textarea>
+        		</div>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-primary pull-right btn-save-new-drug" href="#">Lưu</a>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="drug-ingredients">
@@ -199,9 +228,28 @@
             });
         });
         
-        $(document).on('keydown.autocomplete', ".add-drug-name", function() {
+        $(document).on('keydown.autocomplete', "#add-drug .add-drug-name", function() {
             $(this).autocomplete({
-                source: <?php echo $drug_names; ?>
+                source: <?php echo $drug_names; ?>,
+                appendTo: "#add-drug",
+                select: function( event, ui ) {
+                    $.ajax({
+                        url: '/drug/get_template',
+                        data: {
+                            id: ui.item.id
+                        },
+                        type: "POST",
+                        dataType: 'json',
+                        success: function (data) {
+                            if (data.status) {
+                            	$('#add-drug').find('select[name="unit"]').val(data.unit);
+                            	$('#add-drug').find('input[name="category_name"]').val(data.category_name);
+                            	$('#add-drug').find('input[name="ingredients"]').val(data.ingredients);
+                            	$('#add-drug').find('textarea[name="note"]').val(data.description);
+                            }
+                        }
+                    });
+                }
             });
         });
         
@@ -212,12 +260,92 @@
             });
         });
         
-    	$('.drug-item-save').click(function (event) {
-            if ($('#drug_row').length) {
-                // Prevent default posting of form
-                event.preventDefault();
-
-                var selected = $(this);
+        var ingredient_names = <?php echo $ingredient_names; ?>;
+        function split( val ) {
+        	return val.split( /\,s*/ );
+        }
+        function extractLast( term ) {
+        	return split( term ).pop();
+        }
+        $("#add-drug .ingredients").autocomplete({
+            minLength: 0,
+            source: function( request, response ) {
+            	response($.ui.autocomplete.filter(ingredient_names, extractLast( request.term)));
+            },
+            appendTo: "#add-drug",
+            focus: function() {
+            	return false;
+            },
+            select: function(event, ui) {
+                var terms = split( this.value );
+                // remove the current input
+                terms.pop();
+                // add the selected item
+                terms.push(ui.item.value);
+                // add placeholder to get the comma-and-space at the end
+                terms.push("");
+                this.value = terms.join(", ");
+                return false;
+            }
+        });
+        
+    	$(document).on("click", "#add-drug .btn-save-new-drug", function(e) {
+    		e.preventDefault();
+    		
+    		var drug_name = $('#add-drug').find('input[name="name"]').val();
+    		if (!$.trim(drug_name)) {
+    			alert('Vui lòng nhập tên thuốc.');
+    			return false;
+    		}
+    		
+            $.ajax({
+                url: "/drug/create",
+                data: {
+                    name: drug_name,
+                    unit: $('#add-drug').find('select[name="unit"]').val(),
+                    category_name: $('#add-drug').find('input[name="category_name"]').val(),
+                    in_price: $('#add-drug').find('input[name="in_price"]').val(),
+                    ingredients: $('#add-drug').find('input[name="ingredients"]').val(),
+                    price: $('#add-drug').find('input[name="price"]').val(),
+                    note: $('#add-drug').find('textarea[name="note"]').val()
+                },
+                type: "POST",
+                dataType: 'json',
+                success:function(data) {
+                    if (data.success) {
+                    	$('#add-drug').find('input[name="name"]').val("");
+                    	$('#add-drug').find('select[name="unit"]').val("");
+                    	$('#add-drug').find('input[name="category_name"]').val("");
+                    	$('#add-drug').find('input[name="in_price"]').val("");
+                    	$('#add-drug').find('input[name="ingredients"]').val("");
+                    	$('#add-drug').find('input[name="price"]').val("");
+                    	$('#add-drug').find('textarea[name="note"]').val("");
+                        window.location.href = '/drug/search?search=' + drug_name;
+                    } else {
+                        alert(data.error);
+                    }
+                }
+            });
+        });
+        
+        $(document).on("click", ".btn-add-drug", function(e) {
+        	e.preventDefault();
+        	
+        	$('#add-drug').find('input[name="name"]').val("");
+        	$('#add-drug').find('select[name="unit"]').val("");
+        	$('#add-drug').find('input[name="category_name"]').val("");
+        	$('#add-drug').find('input[name="in_price"]').val("");
+        	$('#add-drug').find('input[name="ingredients"]').val("");
+        	$('#add-drug').find('input[name="price"]').val("");
+        	$('#add-drug').find('textarea[name="note"]').val("");
+            $('#add-drug').modal('show');
+        });
+        
+        $(document).on("click", ".drug-item-save", function(e) {
+        	e.preventDefault();
+        	
+        	var selected = $(this);
+        	if ($(selected).hasClass('editing')) {
                 $.ajax({
                     url: $(selected).attr("drug-url"),
                     data: {
@@ -231,19 +359,18 @@
                     dataType: 'json',
                     success: function (data) {
                         if (data.success) {
+                        	$(selected).removeClass('editing');
                             location.reload();
                         } else {
                             alert(data.error);
                         }
                     }
                 });
+            } else {
+                $(selected).parents(".drug-item").removeClass("drug-item-display").addClass("drug-item-edit");
+                $(selected).removeClass("glyphicon-edit").addClass("glyphicon-ok");
+                $(selected).addClass('editing');
             }
-        });
-        
-        $(document).on("click", ".drug-item-save", function(e) {
-            $(this).parents(".drug-item").removeClass("drug-item-display").addClass("drug-item-edit");
-            $(this).removeClass("glyphicon-edit").addClass("glyphicon-ok");
-            $(this).attr('id', 'drug_row');
         });
         
         $(document).on("click", ".glyphicon-link", function(e) {
@@ -270,37 +397,6 @@
                     if (data.status) {
                     	$('#drug-link').find('.drug-template').val("");
                     	location.reload();
-                    } else {
-                        alert(data.error);
-                    }
-                }
-            });
-        });
-
-        $('#add_drug').click(function (event) {
-            // Prevent default posting of form
-            event.preventDefault();
-
-            var drug_item = $(this).parents('.drug-item-new');
-            $.ajax({
-                url:"/drug/create",
-                data: {
-                    'name': $(drug_item).find('input[name="name"]').val(),
-                    'unit': $(drug_item).find('select[name="unit"]').val(),
-                    'in_price': $(drug_item).find('input[name="in_price"]').val(),
-                    'price': $(drug_item).find('input[name="price"]').val(),
-                    'note': $(drug_item).find('input[name="note"]').val()
-                },
-                type: "POST",
-                dataType: 'json',
-                success:function(data) {
-                    if (data.success) {
-                    	$(drug_item).find('input[name="name"]').val("");
-                    	$(drug_item).find('select[name="unit"]').val("");
-                    	$(drug_item).find('input[name="in_price"]').val("");
-                    	$(drug_item).find('input[name="price"]').val("");
-                    	$(drug_item).find('input[name="note"]').val();
-                        location.reload();
                     } else {
                         alert(data.error);
                     }
@@ -375,12 +471,6 @@
                     }
                 }
             });
-        });
-
-        $(document).on("keypress", ".drug-item-new .form-control", function(e) {
-        	if (e.which == 13) {
-                $(this).parents(".drug-item-new").find("#add_drug").trigger("click");
-            }
         });
 
         $(document).on("keypress", ".drug-item-edit .form-control", function(e) {

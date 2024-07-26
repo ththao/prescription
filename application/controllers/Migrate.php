@@ -566,16 +566,4 @@ class Migrate extends My_Controller
             }
         }
     }
-    
-    public function update_drug_template_name()
-    {
-        $query = $this->db->select('id, name')->from('drug_template')->get();
-        $drugs = $query->result();
-        
-        foreach ($drugs as $drug) {
-            if (strpos('mg ', $drug->name) !== false) {
-                var_dump(substr($drug->name, 'mg '));
-            }
-        }
-    }
 }

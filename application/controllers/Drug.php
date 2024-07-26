@@ -155,6 +155,7 @@ class Drug extends My_Controller
                 $data['in_price'] = $_POST['in_price'];
                 $data['price'] = $_POST['price'];
                 $data['note'] = $_POST['note'];
+                $data['date_created'] = time();
                 if ($drug_template) {
                     $data['drug_template_id'] = $drug_template->id;
                     if (!$data['note']) {
@@ -164,15 +165,35 @@ class Drug extends My_Controller
                         $data['unit'] = $drug_template->unit;
                     }
                 }
-                $data['date_created'] = time();
+                if (isset($_POST['category_name']) && $_POST['category_name']) {
+                    $query = $this->db->select('id')->from('drug_category')->where('LOWER(category_name) = LOWER("' . $_POST['category_name'] . '")', null)->get();
+                    if ($category = $query->row()) {
+                        $data['drug_category_id'] = $category->id;
+                    } else {
+                        $this->db->insert('drug_category', ['category_name' => $_POST['category_name']]);
+                        $data['drug_category_id'] = $this->db->insert_id();
+                    }
+                } else {
+                    if ($drug_template) {
+                        $data['drug_category_id'] = $drug_template->drug_category_id;
+                    }
+                }
                 
                 if (!$this->drug_model->save($data)) {
                     echo json_encode(array('error' => 'Có lỗi. Vui lòng thử lại.'));
                     return;
                 }
+                $drug_id = $this->db->insert_id();
                 
-                if ($drug_template) {
-                    $this->link_template_ingredients($this->db->insert_id(), $drug_template->id);
+                if (isset($_POST['ingredients']) && $_POST['ingredients']) {
+                    $ingredients = explode(',', $_POST['ingredients']);
+                    foreach ($ingredients as $ingredient) {
+                        $this->add_or_update_ingredient(trim($ingredient), $drug_id);
+                    }
+                } else {
+                    if ($drug_template) {
+                        $this->link_template_ingredients($drug_id, $drug_template->id);
+                    }
                 }
                 
                 echo json_encode(array('success' => 'Thuốc mới đã đc thêm vào danh sách'));
@@ -244,27 +265,35 @@ class Drug extends My_Controller
         return;
     }
     
+    private function add_or_update_ingredient($ingredient_name, $drug_id = null)
+    {
+        $query = $this->db->select('id')->from('ingredient')->where('LOWER(ingredient_name) = LOWER("' . $ingredient_name . '")', null)->get();
+        $ingredient = $query->row();
+        
+        if (!$ingredient) {
+            $this->db->insert('ingredient', ['ingredient_name' => $ingredient_name]);
+            $ingredient_id = $this->db->insert_id();
+        } else {
+            $ingredient_id = $ingredient->id;
+        }
+        
+        if ($drug_id) {
+            $query = $this->db->select('id')->from('drug_ingredients')->where('drug_id', $drug_id)->where('ingredient_id', $ingredient_id)->get();
+            if (!$query->row()) {
+                $this->db->insert('drug_ingredients', ['ingredient_id' => $ingredient_id, 'drug_id' => $drug_id]);
+            }
+        }
+        
+        return $ingredient_id;
+    }
+    
     public function add_ingredient()
     {
         
         $drug = $this->drug_model->findOne(['id' => $_POST['drug_id'], 'user_id' => $this->session->userdata('user_id')]);
         
         if ($drug) {
-            
-            $query = $this->db->select('id')->from('ingredient')->where('LOWER(ingredient_name) = LOWER("' . $_POST['ingredient_name'] . '")', null)->get();
-            $ingredient = $query->row();
-            
-            if (!$ingredient) {
-                $this->db->insert('ingredient', ['ingredient_name' => $_POST['ingredient_name']]);
-                $ingredient_id = $this->db->insert_id();
-            } else {
-                $ingredient_id = $ingredient->id;
-            }
-            
-            $query = $this->db->select('id')->from('drug_ingredients')->where('drug_id', $drug->id)->where('ingredient_id', $ingredient_id)->get();
-            if (!$query->row()) {
-                $this->db->insert('drug_ingredients', ['ingredient_id' => $ingredient_id, 'drug_id' => $drug->id]);
-            }
+            $ingredient_id = $this->add_or_update_ingredient($_POST['ingredient_name'], $drug->id);
             
             $html = '
                 <tr>
@@ -292,6 +321,33 @@ class Drug extends My_Controller
             $this->db->where('drug_id', $drug->id)->where('ingredient_id', $_POST['ingredient_id'])->delete('drug_ingredients');
             
             echo json_encode(['status' => 1]);
+            return;
+        }
+        
+        echo json_encode(['status' => 0]);
+        return;
+    }
+    
+    public function get_template()
+    {
+        $query = $this->db->select('drug_template.id, drug_template.name, drug_template.unit, drug_template.description, drug_category.category_name')
+            ->from('drug_template')
+            ->join('drug_category', 'drug_template.drug_category_id = drug_category.id', 'LEFT OUTER')
+            ->where('drug_template.id', $_POST['id'])->get();
+        $drug_template = $query->row_array();
+        
+        if ($drug_template) {
+            $query = $this->db->select('ingredient.ingredient_name')->from('drug_template_ingredients')->join('ingredient', 'ingredient.id = drug_template_ingredients.ingredient_id', 'INNER')->where('drug_template_id', $drug_template['id'])->get();
+            $ingredients = $query->result();
+            
+            $drug_template['ingredients'] = '';
+            if ($ingredients) {
+                foreach ($ingredients as $ingredient) {
+                    $drug_template['ingredients'] .= ($drug_template['ingredients'] ? ', ' : '') . $ingredient->ingredient_name;
+                }
+            }
+            $drug_template['status'] = 1;
+            echo json_encode($drug_template);
             return;
         }
         

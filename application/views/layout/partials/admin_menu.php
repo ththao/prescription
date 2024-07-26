@@ -1,5 +1,5 @@
 <div class="btn-group">
-	<a href="/drug/index" class="btn <?php echo ($this->router->fetch_class() == 'drug' && $this->router->fetch_method() == 'index') ? 'btn-success' : 'btn-default'; ?>">Thuốc</a>
+	<a href="/drug/index" class="btn <?php echo ($this->router->fetch_class() == 'drug' && ($this->router->fetch_method() == 'index' || $this->router->fetch_method() == 'search')) ? 'btn-success' : 'btn-default'; ?>">Thuốc</a>
 	<?php if (SERVICES == 'ON'): ?>
 		<a href="/service/index" class="btn <?php echo ($this->router->fetch_class() == 'service' && $this->router->fetch_method() == 'index') ? 'btn-success' : 'btn-default'; ?>">Kỹ thuật</a>
 		<a href="/package/index" class="hide btn <?php echo ($this->router->fetch_class() == 'package' && in_array($this->router->fetch_method(), ['index', 'update'])) ? 'btn-success' : 'btn-default'; ?>">Gói</a>
