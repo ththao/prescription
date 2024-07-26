@@ -13,6 +13,13 @@
     display: block;
 }
 -->
+
+.select2-container {
+    width: 100% !important;
+}
+.container {
+    width: 90% !important;
+}
 </style>
 
 <?php $this->load->view('layout/partials/admin_menu'); ?>
@@ -36,13 +43,14 @@
     <!-- Table -->
     <table class="table table-striped table-bordered" style="margin-bottom: 0px;">
         <tr>
-            <th>Tên thuốc</th>
-            <th style="width: 100px">Đơn vị</th>
-            <th style="width: 150px">Giá Nhập (VNĐ)</th>
-            <th style="width: 150px">Giá Bán (VNĐ)</th>
-            <th>Thành phần</th>
-            <th>Ghi chú</th>
-            <th>Sửa / Xóa</th>
+            <th style="width: 20%">Tên thuốc</th>
+            <th style="width: 8%">Đơn vị</th>
+            <th style="width: 11%">Loại</th>
+            <th style="width: 8%">Giá Nhập (VNĐ)</th>
+            <th style="width: 8%">Giá Bán (VNĐ)</th>
+            <th style="width: 15%">Thành phần</th>
+            <th style="width: 20%;">Ghi chú</th>
+            <th style="width: 10%;">Sửa / Xóa</th>
         </tr>
 
         <tr class="drug-item-search">
@@ -57,12 +65,14 @@
             <td></td>
             <td></td>
             <td></td>
+            <td></td>
         </tr>
 
         <?php foreach ($models['drugs'] as $item) { ?>
-            <tr class="drug-item drug-item-display">
+            <tr class="drug-item drug-item-display drug-item-<?php echo $item->id;?>">
                 <td>
-                    <label class="display"><?php echo $item->name ?></label>
+                	<input type="hidden" class="drug_id" value="<?php echo $item->id;?>" />
+                    <label class="display" title="<?php echo $item->template_name; ?>"><?php echo $item->name; ?></label>
                     <input type="text" value="<?php echo $item->name ?>" class="form-control edit drug-name" name="name"/>
                 </td>
                 <td>
@@ -72,7 +82,12 @@
                         <option value="Chai" <?php echo $item->unit == 'Chai' ? 'selected' : '' ?>>Chai</option>
                         <option value="Gói" <?php echo $item->unit == 'Gói' ? 'selected' : '' ?>>Gói</option>
                         <option value="Ống" <?php echo $item->unit == 'Ống' ? 'selected' : '' ?>>Ống</option>
+                        <option value="Tuýp" <?php echo $item->unit == 'Tuýp' ? 'selected' : '' ?>>Tuýp</option>
                     </select>
+                </td>
+                <td>
+                    <label class="display"><?php echo $item->category_name; ?></label>
+                    <input type="text" value="<?php echo $item->category_name?>" class="form-control edit drug-category_name" name="category_name"/>
                 </td>
                 <td>
                     <label class="display"><?php echo number_format($item->in_price, 0, ',', '.') ?></label>
@@ -92,6 +107,9 @@
                 <td style="text-align: center; width: 100px">
                     <span class="glyphicon glyphicon-edit drug-item-save" drug-url="/drug/update/<?php echo $item->id ?>" title="Cập nhật thuốc" style="color: blue; cursor: pointer; "></span>&nbsp;
                     <span class="glyphicon glyphicon-search drug-item-ingredients" drug_id="<?php echo $item->id ?>" title="Thành phần thuốc" style="color: blue; cursor: pointer; "></span>&nbsp;
+                    <?php if (!$item->template_name): ?>
+                    <span class="glyphicon glyphicon-link" drug_id="<?php echo $item->id ?>" title="Tham khảo" style="color: blue; cursor: pointer; "></span>&nbsp;
+                    <?php endif; ?>
                     <a href="/drug/delete/<?php echo $item->id ?>" title="Xóa thuốc"><span title="Xóa thuốc" class="glyphicon glyphicon-remove" style="color: red"></span></a>
                 </td>
             </tr>
@@ -107,8 +125,10 @@
                     <option value="Ống">Ống</option>
                 </select>
             </td>
+            <td><input type="text" class="form-control" placeholder="Loại" name="category_name"></td>
             <td><input type="number" class="form-control" placeholder="Giá Nhập" name="in_price"></td>
             <td><input type="number" class="form-control" placeholder="Giá Bán" name="price"></td>
+            <td></td>
             <td><input type="text" class="form-control" placeholder="Ghi chú" name="note"></td>
             <td style="text-align: center"><input type="submit" class="btn btn-success" id="add_drug" value="Thêm"></td>
         </tr>
@@ -143,8 +163,36 @@
     </div>
 </div>
 
+<div class="modal fade" id="drug-link">
+    <div class="modal-dialog modal-dialog-centered asb-modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Tham khảo</h4>
+                <button type="button" class="close asb-btn-icon" data-dismiss="modal" aria-label="Close" style="margin-top: -25px;">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 500px; overflow: scroll;">
+            	<input type="hidden" class="drug_id" value=""/>
+            	<select class="form-control searchable drug-template">
+            	<option value="">Chọn thuốc tham khảo</option>
+            	<?php if ($drug_templates): ?>
+            		<?php foreach ($drug_templates as $drug_template): ?>
+            			<option value="<?php echo $drug_template['id']; ?>"><?php echo $drug_template['value']?></option>
+            		<?php endforeach; ?>
+            	<?php endif; ?>
+            	</select>
+            </div>
+            <div class="modal-footer">
+                <a class="btn btn-primary pull-right btn-save-drug-link" href="#" data-dismiss="modal">Lưu</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     $(document).ready(function() {
+    	
         $(document).on('keydown.autocomplete', ".drug-search", function() {
             $(this).autocomplete({
                 source: <?php echo $my_drug_names; ?>
@@ -196,6 +244,37 @@
             $(this).parents(".drug-item").removeClass("drug-item-display").addClass("drug-item-edit");
             $(this).removeClass("glyphicon-edit").addClass("glyphicon-ok");
             $(this).attr('id', 'drug_row');
+        });
+        
+        $(document).on("click", ".glyphicon-link", function(e) {
+    		$('.drug-template').select2();
+    		$('#drug-link').find('.drug_id').val($(this).parents('.drug-item').find('.drug_id').val());
+            $('#drug-link').modal('show');
+        });
+        
+        $(document).on("click", "#drug-link .btn-save-drug-link", function(e) {
+    		e.preventDefault();
+			
+			var drug_id = $('#drug-link').find('.drug_id').val();
+			var drug_item = $('.drug-item-' + drug_id);
+			
+            $.ajax({
+                url:"/drug/link_with_template",
+                data: {
+                    drug_id: drug_id,
+                    drug_template_id: $('#drug-link').find('.drug-template').val(),
+                },
+                type: "POST",
+                dataType: 'json',
+                success:function(data) {
+                    if (data.status) {
+                    	$('#drug-link').find('.drug-template').val("");
+                    	location.reload();
+                    } else {
+                        alert(data.error);
+                    }
+                }
+            });
         });
 
         $('#add_drug').click(function (event) {

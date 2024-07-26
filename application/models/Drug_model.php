@@ -12,12 +12,14 @@ class Drug_model extends MY_Model {
 
     public function search($search_param, $limit, $start)
     {
-        $this->db->select('*');
+        $this->db->select('drug.*, drug_template.name AS template_name, drug_category.category_name');
         $this->db->from('drug');
-        $this->db->where('user_id', $this->session->userdata('user_id'));
-        $this->db->where('removed', 0);
-        $this->db->like('name', $search_param);
-        $this->db->order_by('name ASC');
+        $this->db->join('drug_template', 'drug_template.id = drug.drug_template_id', 'LEFT OUTER');
+        $this->db->join('drug_category', 'drug_category.id = COALESCE(drug.drug_category_id, drug_template.drug_category_id)', 'LEFT OUTER');
+        $this->db->where('drug.user_id', $this->session->userdata('user_id'));
+        $this->db->where('drug.removed', 0);
+        $this->db->like('drug.name', $search_param);
+        $this->db->order_by('drug.name ASC');
         $this->db->limit($limit, $start);
         
         $query = $this->db->get();

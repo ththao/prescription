@@ -225,20 +225,6 @@ class Prescription extends My_Controller {
                 }
             }
             
-            /*if (isset($_POST['diagnostic']['diagnostic_template_id']) && $_POST['diagnostic']['diagnostic_template_id']) {
-                $diagnostic_template_id = $_POST['diagnostic']['diagnostic_template_id'];
-            } else {
-                $query = $this->db->select('id, diagnostic')->from('diagnostic_template')->where('LOWER(diagnostic)', strtolower($no_abb_diagnostic))->get();
-                $diagnostic_template = $query->row();
-                
-                if ($diagnostic_template) {
-                    $diagnostic_template_id = $diagnostic_template->id;
-                } else {
-                    $this->db->insert('diagnostic_template', ['diagnostic' => $no_abb_diagnostic]);
-                    $diagnostic_template_id = $this->db->insert_id();
-                }
-            }*/
-            
             // Update diagnostic of patient
             $diag = $this->diagnostic_model->findOne(['id' => $id, 'user_id' => $this->session->userdata('user_id')]);
             if ($diag) {

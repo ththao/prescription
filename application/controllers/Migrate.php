@@ -440,8 +440,10 @@ class Migrate extends My_Controller
         // $this->load->library('simple_html_dom');
         ini_set('memory_limit', '4096M');
 
-        $url = 'https://nhathuoclongchau.com.vn/thuoc/tra-cuu-thuoc-a-z?alphabet=B&page=';
-        for ($i = 1; $i <= 10; $i ++) {
+        $url = 'https://nhathuoclongchau.com.vn/thuoc/tra-cuu-thuoc-a-z?alphabet=' . (isset($_GET['c']) ? $_GET['c'] : 'A') . '&page=';
+        $start = isset($_GET['s']) ? $_GET['s'] : 1;
+        $end = isset($_GET['e']) ? $_GET['e'] : 10;
+        for ($i = $start; $i <= $end; $i ++) {
             $html = file_get_contents($url . $i);
 
             $dom = @DOMDocument::loadHTML($html);
@@ -561,6 +563,18 @@ class Migrate extends My_Controller
         if ($id && $ingredients) {
             foreach ($ingredients as $ingredient) {
                 $this->db->insert('drug_template_ingredients', ['drug_template_id' => $id, 'ingredient_id' => $ingredient]);
+            }
+        }
+    }
+    
+    public function update_drug_template_name()
+    {
+        $query = $this->db->select('id, name')->from('drug_template')->get();
+        $drugs = $query->result();
+        
+        foreach ($drugs as $drug) {
+            if (strpos('mg ', $drug->name) !== false) {
+                var_dump(substr($drug->name, 'mg '));
             }
         }
     }

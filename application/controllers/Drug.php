@@ -7,7 +7,7 @@ class Drug extends My_Controller
     {
         parent::__construct();
 
-        $this->loadModel(array('drug_model', 'ingredient_model'));
+        $this->loadModel(['drug_model', 'drug_template_model', 'ingredient_model']);
         $this->load->library('pagination');
         $this->load->helper('url');
     }
@@ -23,12 +23,12 @@ class Drug extends My_Controller
 
         $data['pagination'] = $this->pagination->create_links();
         
-        $query = $this->db->select('drug.name')->from('drug')->where('user_id <> ' . $this->session->userdata('user_id'), null)->where('removed', 0)->get();
+        $query = $this->db->select('id, name')->from('drug_template')->get();
         $drugs = $query->result();
         $drug_names = [];
         if ($drugs) {
             foreach ($drugs as $drug) {
-                $drug_names[] = ['value' => $drug->name, 'label' => $drug->name];
+                $drug_names[] = ['value' => $drug->name, 'label' => $drug->name, 'id' => $drug->id];
             }
         }
         $js_drug_names = json_encode($drug_names);
@@ -52,7 +52,7 @@ class Drug extends My_Controller
         }
         $js_ingredient_names = json_encode($ingredient_names);
 
-        $this->render('drug/index', ['drug_names' => $js_drug_names, 'my_drug_names' => $js_my_drug_names, 'ingredient_names' => $js_ingredient_names, 'models' => $data, 'search' => '']);
+        $this->render('drug/index', ['drug_names' => $js_drug_names, 'drug_templates' => $drug_names, 'my_drug_names' => $js_my_drug_names, 'ingredient_names' => $js_ingredient_names, 'models' => $data, 'search' => '']);
 	}
 	
 	public function import()
@@ -147,18 +147,34 @@ class Drug extends My_Controller
         if (isset($_POST) && !empty($_POST['name']) && !empty($_POST['unit'])) {
             $drug = $this->drug_model->findOne(['name' => $_POST['name'], 'user_id' => $this->session->userdata('user_id'), 'removed' => 0]);
             if (!$drug) {
+                $drug_template = $this->drug_template_model->findOne(['name' => $_POST['name']]);
+                
                 $data['user_id'] = $this->session->userdata('user_id');
                 $data['name'] = $_POST['name'];
                 $data['unit'] = $_POST['unit'];
                 $data['in_price'] = $_POST['in_price'];
                 $data['price'] = $_POST['price'];
                 $data['note'] = $_POST['note'];
+                if ($drug_template) {
+                    $data['drug_template_id'] = $drug_template->id;
+                    if (!$data['note']) {
+                        $data['note'] = $drug_template->description;
+                    }
+                    if (!$data['unit']) {
+                        $data['unit'] = $drug_template->unit;
+                    }
+                }
                 $data['date_created'] = time();
                 
                 if (!$this->drug_model->save($data)) {
                     echo json_encode(array('error' => 'Có lỗi. Vui lòng thử lại.'));
                     return;
                 }
+                
+                if ($drug_template) {
+                    $this->link_template_ingredients($this->db->insert_id(), $drug_template->id);
+                }
+                
                 echo json_encode(array('success' => 'Thuốc mới đã đc thêm vào danh sách'));
                 return;
             } else {
@@ -281,5 +297,33 @@ class Drug extends My_Controller
         
         echo json_encode(['status' => 0]);
         return;
+    }
+    
+    public function link_with_template()
+    {
+        $drug = $this->drug_model->findOne(['id' => $_POST['drug_id'], 'user_id' => $this->session->userdata('user_id')]);
+        $drug_template = $this->drug_template_model->findOne(['id' => $_POST['drug_template_id']]);
+        
+        if ($drug && $drug_template) {
+            $this->db->where('id', $drug->id)->update('drug', ['drug_template_id' => $drug_template->id, 'unit' => $drug_template->unit, 'note' => $drug_template->description, 'date_updated' => time(), 'removed' => 0]);
+            
+            $this->link_template_ingredients($drug->id, $drug_template->id);
+        }
+        
+        echo json_encode(['status' => 1]);
+        return;
+    }
+    
+    private function link_template_ingredients($drug_id, $drug_template_id)
+    {
+        $query = $this->db->select('id')->from('drug_template_ingredients')->where('drug_template_id', $drug_template_id)->get();
+        if ($ingredients = $query->result()) {
+            foreach ($ingredients as $ingredient) {
+                $query = $this->db->select('id')->from('drug_ingredients')->where('drug_id', $drug_id)->where('ingredient_id', $ingredient->id)->get();
+                if (!$query->row()) {
+                    $this->db->insert('drug_ingredients', ['ingredient_id' => $ingredient->id, 'drug_id' => $drug_id]);
+                }
+            }
+        }
     }
 }
