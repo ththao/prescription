@@ -200,7 +200,7 @@ class Prescription extends My_Controller {
             $this->db->trans_start();
             
             $no_abb_diagnostic = $this->replaceAbbreviations($_POST['diagnostic']['diagnostic']);
-            $no_abb_diagnostic = implode('/ ', $no_abb_diagnostic);
+            $no_abb_diagnostic = is_array($no_abb_diagnostic) ? implode('/ ', $no_abb_diagnostic) : $no_abb_diagnostic;
             if (substr($no_abb_diagnostic, -1) == '/') {
                 $no_abb_diagnostic = substr($no_abb_diagnostic, 0, strlen($no_abb_diagnostic) - 1);
             } else if (substr($no_abb_diagnostic, -2) == '/ ') {

@@ -23,36 +23,64 @@ class Drug extends My_Controller
 
         $data['pagination'] = $this->pagination->create_links();
         
-        $query = $this->db->select('id, name')->from('drug_template')->get();
-        $drugs = $query->result();
-        $drug_names = [];
-        if ($drugs) {
-            foreach ($drugs as $drug) {
-                $drug_names[] = ['value' => $drug->name, 'label' => $drug->name, 'id' => $drug->id];
-            }
-        }
-        $js_drug_names = json_encode($drug_names);
-        
-        $my_drugs = $this->drug_model->findAll(['user_id' => $this->session->userdata('user_id'), 'removed' => 0]);
-        $my_drug_names = [];
-        if ($my_drugs) {
-            foreach ($my_drugs as $drug) {
-                $my_drug_names[] = ['value' => $drug->name, 'label' => $drug->name];
-            }
-        }
-        $js_my_drug_names = json_encode($my_drug_names);
-        
-        
-        $ingredients = $this->ingredient_model->findAll();
-        $ingredient_names = [];
-        if ($ingredients) {
-            foreach ($ingredients as $ingredient) {
-                $ingredient_names[] = ['id' => $ingredient->id, 'value' => $ingredient->ingredient_name, 'label' => $ingredient->ingredient_name];
-            }
-        }
-        $js_ingredient_names = json_encode($ingredient_names);
+        $response = $this->prepare_data();
+        $response['models'] = $data;
+        $response['search'] = '';
 
-        $this->render('drug/index', ['drug_names' => $js_drug_names, 'drug_templates' => $drug_names, 'my_drug_names' => $js_my_drug_names, 'ingredient_names' => $js_ingredient_names, 'models' => $data, 'search' => '']);
+        $this->render('drug/index', $response);
+	}
+	
+	private function prepare_data()
+	{
+	    $query = $this->db->select('id, name')->from('drug_template')->get();
+	    $drugs = $query->result();
+	    $drug_names = [];
+	    if ($drugs) {
+	        foreach ($drugs as $drug) {
+	            $drug_names[] = ['value' => $drug->name, 'label' => $drug->name, 'id' => $drug->id];
+	        }
+	    }
+	    $js_drug_names = json_encode($drug_names);
+	    
+	    $my_drugs = $this->drug_model->findAll(['user_id' => $this->session->userdata('user_id'), 'removed' => 0]);
+	    $my_drug_names = [];
+	    if ($my_drugs) {
+	        foreach ($my_drugs as $drug) {
+	            $my_drug_names[] = ['value' => $drug->name, 'label' => $drug->name];
+	        }
+	    }
+	    $js_my_drug_names = json_encode($my_drug_names);
+	    
+	    
+	    $ingredients = $this->ingredient_model->findAll();
+	    $ingredient_names = [];
+	    if ($ingredients) {
+	        foreach ($ingredients as $ingredient) {
+	            $ingredient_names[] = ['id' => $ingredient->id, 'value' => $ingredient->ingredient_name, 'label' => $ingredient->ingredient_name];
+	        }
+	    }
+	    $js_ingredient_names = json_encode($ingredient_names);
+	    
+	    return ['drug_names' => $js_drug_names, 'drug_templates' => $drug_names, 'my_drug_names' => $js_my_drug_names, 'ingredient_names' => $js_ingredient_names];
+	}
+	
+	public function search()
+	{
+	    $search = $this->input->get('search');
+	    $config = $this->pagination_config($this->drug_model->count($search), site_url('drug/search'));
+	    $this->pagination->initialize($config);
+	    
+	    $data['page'] = $this->uri->segment(3);
+	    //call the model function to get the department data
+	    $data['drugs'] = $this->drug_model->search($search, $config["per_page"], $data['page']);
+	    
+	    $data['pagination'] = $this->pagination->create_links();
+	    
+	    $response = $this->prepare_data();
+	    $response['models'] = $data;
+	    $response['search'] = $search;
+	    
+	    $this->render('drug/index', $response);
 	}
 	
 	public function import()
@@ -107,40 +135,6 @@ class Drug extends My_Controller
         }
 	    redirect('drug/index');
 	}
-
-    public function search()
-    {
-        $search = $this->input->get('search');
-        $config = $this->pagination_config($this->drug_model->count($search), site_url('drug/search'));
-        $this->pagination->initialize($config);
-        
-        $data['page'] = $this->uri->segment(3);
-        //call the model function to get the department data
-        $data['drugs'] = $this->drug_model->search($search, $config["per_page"], $data['page']);
-
-        $data['pagination'] = $this->pagination->create_links();
-        
-        $query = $this->db->select('drug.name')->from('drug')->where('user_id <> ' . $this->session->userdata('user_id'), null)->where('removed', 0)->get();
-        $drugs = $query->result();
-        $drug_names = [];
-        if ($drugs) {
-            foreach ($drugs as $drug) {
-                $drug_names[] = ['value' => $drug->name, 'label' => $drug->name];
-            }
-        }
-        $js_drug_names = json_encode($drug_names);
-        
-        $my_drugs = $this->drug_model->findAll(['user_id' => $this->session->userdata('user_id'), 'removed' => 0]);
-        $my_drug_names = [];
-        if ($my_drugs) {
-            foreach ($my_drugs as $drug) {
-                $my_drug_names[] = ['value' => $drug->name, 'label' => $drug->name];
-            }
-        }
-        $js_my_drug_names = json_encode($my_drug_names);
-
-        $this->render('drug/index', ['drug_names' => $js_drug_names, 'my_drug_names' => $js_my_drug_names, 'models' => $data, 'search' => $search]);
-    }
 
     public function create()
     {
