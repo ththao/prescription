@@ -160,16 +160,34 @@ class Prescription extends My_Controller {
                 $diagnostics[$index] = '"' . trim($diagnostic) . '"';
             }
             
-            $this->db->distinct()->select('drug.id, drug.name, drug.unit, diagnostic_template_prescription.most_used');
+            $this->db->distinct()->select('drug.id, drug.name, drug.unit, drug.note, diagnostic_template_prescription.most_used, ingredient.ingredient_name');
             $this->db->from('diagnostic_template_prescription');
             $this->db->join('diagnostic_template', 'diagnostic_template.id = diagnostic_template_prescription.diagnostic_template_id', 'INNER');
             $this->db->join('drug', 'LOWER(diagnostic_template_prescription.drug_name) = LOWER(drug.name) AND drug.removed = 0 AND drug.user_id = ' . $this->session->userdata('user_id'), 'INNER');
+            $this->db->join('drug_ingredients', 'drug.id = drug_ingredients.drug_id', 'LEFT OUTER');
+            $this->db->join('ingredient', 'ingredient.id = drug_ingredients.ingredient_id', 'LEFT OUTER');
             $this->db->where('LOWER(diagnostic_template.diagnostic) IN (' . implode(',', $diagnostics) . ')', null);
             $this->db->order_by('diagnostic_template_prescription.most_used DESC, drug.name ASC');
             $query = $this->db->get();
-            $drugs = $query->result();
+            $data = $query->result();
             
-            if ($drugs) {
+            if ($data) {
+                $drugs = [];
+                foreach ($data as $item) {
+                    if (!isset($drugs[$item->id])) {
+                        $drugs[$item->id] = [
+                            'id' => $item->id,
+                            'name' => $item->name,
+                            'unit' => $item->unit,
+                            'description' => $item->note,
+                            'most_used' => $item->most_used,
+                            'ingredients' => []
+                        ];
+                    }
+                    if ($item->ingredient_name) {
+                        $drugs[$item->id]['ingredients'][] = $item->ingredient_name;
+                    }
+                }
                 $html = $this->load->view('prescription/suggested_drugs', ['drugs' => $drugs], true);
                 
                 echo json_encode(['success' => 1, 'html' => $html]);

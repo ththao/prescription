@@ -366,12 +366,12 @@ class Drug extends My_Controller
     
     private function link_template_ingredients($drug_id, $drug_template_id)
     {
-        $query = $this->db->select('id')->from('drug_template_ingredients')->where('drug_template_id', $drug_template_id)->get();
+        $query = $this->db->select('id, ingredient_id')->from('drug_template_ingredients')->where('drug_template_id', $drug_template_id)->get();
         if ($ingredients = $query->result()) {
             foreach ($ingredients as $ingredient) {
                 $query = $this->db->select('id')->from('drug_ingredients')->where('drug_id', $drug_id)->where('ingredient_id', $ingredient->id)->get();
                 if (!$query->row()) {
-                    $this->db->insert('drug_ingredients', ['ingredient_id' => $ingredient->id, 'drug_id' => $drug_id]);
+                    $this->db->insert('drug_ingredients', ['ingredient_id' => $ingredient->ingredient_id, 'drug_id' => $drug_id]);
                 }
             }
         }
