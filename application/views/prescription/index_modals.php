@@ -1,5 +1,5 @@
 <div class="modal fade" id="suggest-drugs">
-    <div class="modal-dialog modal-dialog-centered asb-modal-dialog">
+    <div class="modal-dialog modal-dialog-centered asb-modal-dialog" style="width: 800px;">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">Đề nghị dùng thuốc</h4>

@@ -160,14 +160,14 @@ class Prescription extends My_Controller {
                 $diagnostics[$index] = '"' . trim($diagnostic) . '"';
             }
             
-            $this->db->distinct()->select('drug.id, drug.name, drug.unit, drug.note, diagnostic_template_prescription.most_used, ingredient.ingredient_name');
+            $this->db->distinct()->select('drug.id, drug.name, drug.unit, drug.note, drug_category_name, diagnostic_template_prescription.used_count, ingredient.ingredient_name');
             $this->db->from('diagnostic_template_prescription');
             $this->db->join('diagnostic_template', 'diagnostic_template.id = diagnostic_template_prescription.diagnostic_template_id', 'INNER');
             $this->db->join('drug', 'LOWER(diagnostic_template_prescription.drug_name) = LOWER(drug.name) AND drug.removed = 0 AND drug.user_id = ' . $this->session->userdata('user_id'), 'INNER');
             $this->db->join('drug_ingredients', 'drug.id = drug_ingredients.drug_id', 'LEFT OUTER');
             $this->db->join('ingredient', 'ingredient.id = drug_ingredients.ingredient_id', 'LEFT OUTER');
             $this->db->where('LOWER(diagnostic_template.diagnostic) IN (' . implode(',', $diagnostics) . ')', null);
-            $this->db->order_by('diagnostic_template_prescription.most_used DESC, drug.name ASC');
+            $this->db->order_by('diagnostic_template_prescription.used_count DESC, drug.name ASC');
             $query = $this->db->get();
             $data = $query->result();
             
@@ -179,8 +179,9 @@ class Prescription extends My_Controller {
                             'id' => $item->id,
                             'name' => $item->name,
                             'unit' => $item->unit,
+                            'drug_category_name' => $item->drug_category_name,
                             'description' => $item->note,
-                            'most_used' => $item->most_used,
+                            'most_used' => 0,
                             'ingredients' => []
                         ];
                     }

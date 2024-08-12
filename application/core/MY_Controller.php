@@ -116,46 +116,39 @@ class My_Controller extends CI_Controller
         return $config;
     }
     
-    protected function replaceAbbreviations($string)
+    protected function replaceAbbreviations($user_id, $string)
     {
-        if ($this->session->userdata('user_id') == 3) {
-            $parts = explode('/', $string);
+        
+        $parts = explode('/', $string);
+        
+        if ($user_id == 3) {
             
             if ($parts) {
                 foreach ($parts as $index => $part) {
                     $part = strtolower(trim($part));
-                    switch  ($part) {
-                        case 'rlth':
-                            $parts[$index] = 'Rối loạn tiêu hóa';
-                            break;
-                        case 'rlgn':
-                            $parts[$index] = 'Rối loạn giấc ngủ';
-                            break;
-                        case 'vhm':
-                            $parts[$index] = 'viêm họng mạn';
-                            break;
-                        case 'vhc':
-                            $parts[$index] = 'viêm họng cấp';
-                            break;
-                        case 'vmhc':
-                            $parts[$index] = 'viêm mũi họng cấp';
-                            break;
-                        case 'vmdu':
-                            $parts[$index] = 'Viêm mũi dị ứng';
-                            break;
-                        case 'vmxdu':
-                            $parts[$index] = 'Viêm mũi xoang dị ứng';
-                            break;
-                        default:
-                            break;
-                    }
+                    
+                    $part = str_replace('votn', 'Viêm ống tai ngoài', $part);
+                    $part = str_replace('otn', 'ống tai ngoài', $part);
+                    $part = str_replace('vtg', 'Viêm tai giữa', $part);
+                    $part = str_replace('rlth', 'Rối loạn tiêu hóa', $part);
+                    $part = str_replace('rlgn', 'Rối loạn giấc ngủ', $part);
+                    $part = str_replace('vhm', 'viêm họng mạn', $part);
+                    $part = str_replace('vhc', 'viêm họng cấp', $part);
+                    $part = str_replace('vmhc', 'viêm mũi họng cấp', $part);
+                    $part = str_replace('vmdu', 'Viêm mũi dị ứng', $part);
+                    $part = str_replace('vmxdu', 'Viêm mũi xoang dị ứng', $part);
+                    $part = str_replace('vmxm', 'Viêm mũi xoang mạn', $part);
+                    $part = str_replace('vmxc', 'Viêm mũi xoang cấp', $part);
+                    $part = str_replace('hpq', 'Hen phế quản', $part);
+                    $part = str_replace('rltktg', 'Rối loạn thần kinh trung gian', $part);
+                    $part = str_replace('rltktv', 'Rối loạn thần kinh thực vật', $part);
+                    
+                    $parts[$index] = $part;
                 }
             }
-            
-            return $parts;
         }
         
-        return $string;
+        return $parts;
     }
     
     protected function prescription_by_diagnostic($diagnostic_template_id, $do_now = false)
@@ -170,58 +163,30 @@ class My_Controller extends CI_Controller
             }
         }
         
-        $this->db->select('diagnostic.id AS diagnostic_id, drug.id AS drug_id, drug.name AS drug_name');
-        $this->db->from('diagnostic');
-        $this->db->join('prescription', 'prescription.diagnostic_id = diagnostic.id', 'INNER');
-        $this->db->join('drug', 'prescription.drug_id = drug.id', 'INNER');
-        $this->db->join('diagnostic_template', 'LOWER(diagnostic_template.diagnostic) = LOWER(diagnostic.diagnostic)', 'INNER');
-        $this->db->where('diagnostic_template.id', $diagnostic_template_id);
-        $this->db->where('diagnostic.user_id', $this->session->userdata('user_id'));
-        $this->db->where('prescription.user_id', $this->session->userdata('user_id'));
-        $this->db->where('drug.user_id', $this->session->userdata('user_id'));
-        $this->db->where('prescription.removed', 0);
-        $this->db->where('diagnostic.removed', 0);
-        $this->db->where('drug.removed', 0);
-        $this->db->order_by('diagnostic.id, drug.id');
-        $query = $this->db->get();
+        $sql = 'SELECT `drug_template`.`name` AS `drug_template_name`, `drug`.`name` AS `drug_name`, `drug_category`.`category_name`, COUNT(DISTINCT diagnostic.id) AS drug_used_count 
+
+        FROM `diagnostic` 
+        INNER JOIN `prescription` ON `prescription`.`diagnostic_id` = `diagnostic`.`id` 
+        INNER JOIN `drug` ON `prescription`.`drug_id` = `drug`.`id` 
+        INNER JOIN `diagnostic_template` ON LOWER(diagnostic_template.diagnostic) = LOWER(diagnostic.diagnostic) 
+        INNER JOIN `drug_template` ON (LOWER(drug_template.name) = LOWER(drug.name) OR 
+        (LOWER(drug_template.name) LIKE CONCAT(LOWER(drug.name), "%") AND NOT EXISTS (SELECT id FROM drug_template d1 WHERE LOWER(d1.name) = LOWER(drug.name)))) 
         
+        LEFT OUTER JOIN `drug_category` ON `drug_template`.`drug_category_id` = `drug_category`.`id` 
+        WHERE `diagnostic_template`.`id` = ' . $diagnostic_template_id . ' AND `prescription`.`removed` =0 AND `diagnostic`.`removed` =0 AND `drug`.`removed` =0 
+        GROUP BY `drug_template`.`name`, `drug`.`name` ORDER BY `drug_category`.`category_name`, `drug_used_count` DESC';
+        
+        $query = $this->db->query($sql);
         $all_drugs = $query->result();
-        //print_r($all_drugs);
         
-        $pres_drugs = [];
-        $group_drugs = [];
-        foreach ($all_drugs as $all_drug) {
-            $pres_drugs[$all_drug->drug_id] = $all_drug->drug_name;
-            if (isset($group_drugs[$all_drug->diagnostic_id])) {
-                $group_drugs[$all_drug->diagnostic_id] .= ',' . $all_drug->drug_id;
-            } else {
-                $group_drugs[$all_drug->diagnostic_id] = $all_drug->drug_id;
-            }
-        }
-        $count_group = [];
-        foreach ($group_drugs as $group_drug) {
-            if (isset($count_group[$group_drug])) {
-                $count_group[$group_drug] ++;
-            } else {
-                $count_group[$group_drug] = 1;
-            }
-        }
-        
-        arsort($count_group);
-        
-        $most_used_group = key($count_group);
-        $most_used_group = $most_used_group ? explode(',', $most_used_group) : [];
-        
-        foreach ($pres_drugs as $pres_drug_id => $pres_drug_name) {
-            $query = $this->db->select('id')->from('diagnostic_template_prescription')->where('diagnostic_template_id', $diagnostic_template_id)->where('LOWER(drug_name)', strtolower($pres_drug_name))->get();
+        foreach ($all_drugs as $drug) {
+            $query = $this->db->select('id')->from('diagnostic_template_prescription')->where('diagnostic_template_id', $diagnostic_template_id)->where('LOWER(drug_name)', strtolower($drug->drug_template_name))->get();
             $row = $query->row();
             
-            $most_used = in_array($pres_drug_id, $most_used_group) ? 1 : 0;
-            
-            if ($row) {
-                $this->db->where('id', $row->id)->update('diagnostic_template_prescription', ['most_used' => $most_used]);
+            if (!$row) {
+                $this->db->insert('diagnostic_template_prescription', ['diagnostic_template_id' => $diagnostic_template_id, 'drug_name' => $drug->drug_template_name, 'drug_category_name' => $drug->category_name, 'used_count' => $drug->drug_used_count]);
             } else {
-                $this->db->insert('diagnostic_template_prescription', ['diagnostic_template_id' => $diagnostic_template_id, 'drug_name' => strtolower($pres_drug_name), 'most_used' => $most_used]);
+                $this->db->where('id', $row->id)->update('diagnostic_template_prescription', ['used_count' => $drug->drug_used_count]);
             }
         }
     }

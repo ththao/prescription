@@ -301,12 +301,12 @@ class Migrate extends My_Controller
     
     public function templates()
     {
-        $query = $this->db->select('id, diagnostic')->from('diagnostic')->where('diagnostic_template_id IS NULL', null)->where('user_id', $this->session->userdata('user_id'))->limit(1000)->get();
+        $query = $this->db->select('id, diagnostic, user_id')->from('diagnostic')->where('diagnostic_template_id IS NULL', null)->limit(1000)->get();
         $diagnostics = $query->result();
         
         if ($diagnostics) {
             foreach ($diagnostics as $diagnostic) {
-                $diags = $this->replaceAbbreviations($diagnostic->diagnostic);
+                $diags = $this->replaceAbbreviations($diagnostic->user_id, $diagnostic->diagnostic);
                 if ($diags) {
                     foreach ($diags as $diag) {
                         $diag = trim($diag);
@@ -321,24 +321,28 @@ class Migrate extends My_Controller
                                 $diagnostic_template_id = $this->db->insert_id();
                             }
                             
-                            $this->prescription_by_diagnostic($diagnostic_template_id, 1);
+                            //$this->prescription_by_diagnostic($diagnostic_template_id, 1);
+                            
+                            $this->db->where('LOWER(diagnostic)', strtolower($diag))->update('diagnostic', ['diagnostic_template_id' => $diagnostic_template_id]);
                         }
                     }
                 }
                 
-                $this->db->where('id', $diagnostic->id)->update('diagnostic', ['diagnostic_template_id' => 1]);
+                $this->db->where('id', $diagnostic->id)->where('diagnostic_template_id', null)->update('diagnostic', ['diagnostic_template_id' => 999999999]);
             }
         }
     }
     
     public function update_templates()
     {
-        $query = $this->db->select('id')->from('diagnostic_template')->where(' NOT EXISTS (SELECT diagnostic_template_id FROM diagnostic_template_prescription WHERE diagnostic_template_prescription.diagnostic_template_id = diagnostic_template.id)', null)->limit(100)->get();
+        $query = $this->db->select('id')->from('diagnostic_template')->where('add_prescription', 0)->limit(1)->get();
         $templates = $query->result();
         
         if ($templates) {
             foreach ($templates as $template) {
                 $this->prescription_by_diagnostic($template->id, 1);
+                
+                $this->db->where('id', $template->id)->update('diagnostic_template', ['add_prescription' => 1]);
             }
         }
     }
